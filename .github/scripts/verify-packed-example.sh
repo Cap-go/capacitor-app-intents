@@ -57,12 +57,18 @@ case "$platform" in
         --config app-shortcuts.config.json \
         --output ios-shortcuts/CapgoGeneratedAppShortcuts.swift
     fi
-    if [ -f ios-shortcuts/CapgoGeneratedAppShortcuts.swift ] && [ -d ios/App/App ]; then
-      cp ios-shortcuts/CapgoGeneratedAppShortcuts.swift ios/App/App/CapgoGeneratedAppShortcuts.swift
-      if [ -f ios/App/App.xcodeproj/project.pbxproj ]; then
-        node "$repo_root/scripts/patch-ios-app-swift-source.mjs" \
-          ios/App/App.xcodeproj/project.pbxproj \
-          CapgoGeneratedAppShortcuts.swift
+    if [ -f ios-shortcuts/CapgoGeneratedAppShortcuts.swift ]; then
+      capapp_spm_sources="ios/App/CapApp-SPM/Sources/CapApp-SPM"
+      if [ -d "$capapp_spm_sources" ]; then
+        cp ios-shortcuts/CapgoGeneratedAppShortcuts.swift \
+          "$capapp_spm_sources/CapgoGeneratedAppShortcuts.swift"
+      elif [ -d ios/App/App ]; then
+        cp ios-shortcuts/CapgoGeneratedAppShortcuts.swift ios/App/App/CapgoGeneratedAppShortcuts.swift
+        if [ -f ios/App/App.xcodeproj/project.pbxproj ]; then
+          node "$repo_root/scripts/patch-ios-app-swift-source.mjs" \
+            ios/App/App.xcodeproj/project.pbxproj \
+            CapgoGeneratedAppShortcuts.swift
+        fi
       fi
     fi
     if [ -f ios/App/CapApp-SPM/Package.swift ]; then
