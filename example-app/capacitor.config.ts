@@ -4,6 +4,9 @@ const config: CapacitorConfig = {
   appId: 'app.capgo.appintents',
   appName: 'Capgo App Intents',
   webDir: 'dist',
+  ios: {
+    minVersion: '16.0',
+  },
   plugins: {
     SplashScreen: {
       launchAutoHide: false,

@@ -63,7 +63,8 @@ case "$platform" in
       -destination generic/platform=iOS \
       -clonedSourcePackagesDirPath "$tmp_root/plugin-example-swiftpm" \
       -derivedDataPath "$tmp_root/plugin-example-derived-data" \
-      CODE_SIGNING_ALLOWED=NO
+      CODE_SIGNING_ALLOWED=NO \
+      IPHONEOS_DEPLOYMENT_TARGET=16.0
     ;;
   web)
     ;;
