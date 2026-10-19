@@ -1,6 +1,6 @@
 {
   "name": "@capgo/capacitor-app-intents",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "description": "Siri, Shortcuts, Spotlight, Home Screen quick actions, and Apple App Intents for Capacitor apps with a JavaScript dispatch bridge.",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
