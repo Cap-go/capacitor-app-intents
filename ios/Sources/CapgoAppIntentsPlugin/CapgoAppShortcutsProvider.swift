@@ -25,8 +25,8 @@ public struct CapgoAppShortcutsProvider: AppShortcutsProvider {
                 phrases: [
                     "Run in \(.applicationName)"
                 ],
-                shortTitle: "\(definition.shortTitle)",
-                systemImageName: definition.systemImageName ?? "bolt"
+                shortTitle: LocalizedStringResource(stringLiteral: definition.shortTitle),
+                systemImageName: "bolt"
             )
         }
     }

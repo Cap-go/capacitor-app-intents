@@ -93,7 +93,7 @@ We welcome contributions, including AI-generated pull requests. Every PR must in
 - **No breaking changes** unless aligned with a new Capacitor major release.
 - Run `bun run verify` and `bun run fmt` before opening a PR. CI will catch failures, but catching them locally saves time.
 - If you are an AI agent, that is perfectly fine. Just be transparent about it. We care that the code is correct and helpful, not who wrote it.
-- We review PRs on a best-effort basis. We may request changes — you are expected to address them for the PR to be merged.
+- We review PRs on a best-effort basis. We may request changes. You are expected to address them for the PR to be merged.
 - We use automated code review tools (CodeRabbit, and others). You will need to respond to their feedback and resolve any issues they raise.
 - We have automatic releases. Once merged, your change will ship in the next release cycle.
 
@@ -118,10 +118,10 @@ We welcome contributions, including AI-generated pull requests. Every PR must in
 
 ## Common Pitfalls
 
-- Always rename Swift/Java classes and package IDs when creating a new plugin from a template — leftover names cause registration conflicts.
+- Always rename Swift/Java classes and package IDs when creating a new plugin from a template. Leftover names cause registration conflicts.
 - We only use Java 21 for Android builds.
 - Keep temporary files clean: delete or mark with `deleteOnExit` after use.
-- `dist/` is fully regenerated on every build — never edit generated files.
+- `dist/` is fully regenerated on every build. Never edit generated files.
 - Use Bun for everything. Do not use npm or npx. Use `bunx` if you need to run a package binary.
 - Production and PR beta publishes use `npm stage publish`. Plugin CI only has the org `NPM_TOKEN`.
 
