@@ -40,7 +40,7 @@ public final class CapgoQuickActionsManager {
                 localizedTitle: item.title,
                 localizedSubtitle: item.subtitle,
                 icon: icon,
-                userInfo: ["capgoQuickAction": true]
+                userInfo: nil
             )
         }
 
