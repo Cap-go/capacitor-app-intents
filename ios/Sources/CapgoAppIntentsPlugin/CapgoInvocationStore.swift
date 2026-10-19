@@ -37,13 +37,15 @@ public enum CapgoJSONValue: Codable, Equatable {
         switch value {
         case let string as String:
             return .string(string)
-        case let int as Int:
-            return .number(Double(int))
+        case let bool as Bool:
+            return .bool(bool)
         case let number as NSNumber:
             if CFGetTypeID(number) == CFBooleanGetTypeID() {
                 return .bool(number.boolValue)
             }
             return .number(number.doubleValue)
+        case let int as Int:
+            return .number(Double(int))
         case let dict as [String: Any]:
             var object: [String: CapgoJSONValue] = [:]
             for (key, nested) in dict {
@@ -89,6 +91,7 @@ public final class CapgoInvocationStore {
 
     private let storageKey = "capgo_app_intents_pending_queue_v1"
     private var suiteName: String?
+    private let queue = DispatchQueue(label: "capgo.appintents.invocation.store")
 
     private init() {}
 
@@ -104,10 +107,12 @@ public final class CapgoInvocationStore {
     }
 
     public func all() -> [CapgoInvocationRecord] {
-        guard let data = defaults.data(forKey: storageKey) else {
-            return []
+        queue.sync {
+            guard let data = defaults.data(forKey: storageKey) else {
+                return []
+            }
+            return (try? JSONDecoder().decode([CapgoInvocationRecord].self, from: data)) ?? []
         }
-        return (try? JSONDecoder().decode([CapgoInvocationRecord].self, from: data)) ?? []
     }
 
     public func enqueue(
@@ -115,31 +120,42 @@ public final class CapgoInvocationStore {
         params: [String: Any],
         source: CapgoInvocationSource
     ) -> CapgoInvocationRecord {
-        var encodedParams: [String: CapgoJSONValue] = [:]
-        for (key, value) in params {
-            encodedParams[key] = CapgoJSONValue.fromAny(value)
-        }
+        queue.sync {
+            var encodedParams: [String: CapgoJSONValue] = [:]
+            for (key, value) in params {
+                encodedParams[key] = CapgoJSONValue.fromAny(value)
+            }
 
-        let record = CapgoInvocationRecord(
-            id: UUID().uuidString,
-            name: name,
-            params: encodedParams,
-            source: source,
-            createdAt: Date().timeIntervalSince1970 * 1000
-        )
+            let record = CapgoInvocationRecord(
+                id: UUID().uuidString,
+                name: name,
+                params: encodedParams,
+                source: source,
+                createdAt: Date().timeIntervalSince1970 * 1000
+            )
 
-        var queue = all()
-        queue.append(record)
-        if queue.count > CapgoInvocationStore.maxEntries {
-            queue.removeFirst(queue.count - CapgoInvocationStore.maxEntries)
+            var pending = readQueue()
+            pending.append(record)
+            if pending.count > CapgoInvocationStore.maxEntries {
+                pending.removeFirst(pending.count - CapgoInvocationStore.maxEntries)
+            }
+            persist(pending)
+            return record
         }
-        persist(queue)
-        return record
     }
 
     public func remove(id: String) {
-        let queue = all().filter { $0.id != id }
-        persist(queue)
+        queue.sync {
+            let pending = readQueue().filter { $0.id != id }
+            persist(pending)
+        }
+    }
+
+    private func readQueue() -> [CapgoInvocationRecord] {
+        guard let data = defaults.data(forKey: storageKey) else {
+            return []
+        }
+        return (try? JSONDecoder().decode([CapgoInvocationRecord].self, from: data)) ?? []
     }
 
     private func persist(_ queue: [CapgoInvocationRecord]) {

@@ -28,8 +28,9 @@ function escapeSwiftString(value) {
 }
 
 function phraseToSwiftLiteral(phrase) {
-  const withAppName = phrase.replace(/\{\{applicationName\}\}/g, '\\(.applicationName)');
-  return `"${withAppName.replace(/"/g, '\\"')}"`;
+  const escaped = phrase.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const withAppName = escaped.replace(/\{\{applicationName\}\}/g, '\\(.applicationName)');
+  return `"${withAppName}"`;
 }
 
 function validateConfig(config) {
@@ -42,6 +43,13 @@ function validateConfig(config) {
     }
     if (!Array.isArray(shortcut.phrases) || shortcut.phrases.length === 0) {
       throw new Error(`Shortcut ${shortcut.actionName} needs at least one phrase`);
+    }
+    for (const phrase of shortcut.phrases) {
+      if (!phrase.includes('{{applicationName}}')) {
+        throw new Error(
+          `Shortcut ${shortcut.actionName} phrase must include {{applicationName}}: ${phrase}`,
+        );
+      }
     }
   }
 }

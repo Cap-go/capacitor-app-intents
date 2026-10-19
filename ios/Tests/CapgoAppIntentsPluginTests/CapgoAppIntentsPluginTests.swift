@@ -2,14 +2,14 @@ import XCTest
 @testable import CapgoAppIntentsPlugin
 
 final class CapgoAppIntentsPluginTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        CapgoInvocationStore.shared.configure(suiteName: nil)
+    private func isolatedSuite() -> String {
+        let suite = "group.capgo.appintents.tests.\(UUID().uuidString)"
+        UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite)
+        return suite
     }
 
     func testInvocationQueueCap() {
-        let suite = "group.capgo.appintents.tests.\(UUID().uuidString)"
-        UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite)
+        let suite = isolatedSuite()
         CapgoInvocationStore.shared.configure(suiteName: suite)
 
         for index in 0..<105 {
@@ -26,6 +26,9 @@ final class CapgoAppIntentsPluginTests: XCTestCase {
     }
 
     func testRemoveInvocation() {
+        let suite = isolatedSuite()
+        CapgoInvocationStore.shared.configure(suiteName: suite)
+
         let record = CapgoInvocationStore.shared.enqueue(
             name: "test",
             params: [:],
@@ -36,7 +39,8 @@ final class CapgoAppIntentsPluginTests: XCTestCase {
     }
 
     func testEntityCatalogRoundTrip() {
-        CapgoEntityCatalogStore.shared.configure(suiteName: nil)
+        let suite = isolatedSuite()
+        CapgoEntityCatalogStore.shared.configure(suiteName: suite)
         CapgoEntityCatalogStore.shared.setCatalog(
             type: "dish",
             entries: [

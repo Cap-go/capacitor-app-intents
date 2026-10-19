@@ -6,8 +6,11 @@ public final class CapgoSpotlightMappingStore {
     private let storageKey = "capgo_app_intents_spotlight_map_v1"
     private var suiteName: String?
 
-    private struct Mapping: Codable {
+    struct Mapping: Codable {
         let actionName: String
+        let title: String
+        let description: String?
+        let keywords: [String]?
         let params: [String: CapgoJSONValue]?
     }
 
@@ -31,23 +34,39 @@ public final class CapgoSpotlightMappingStore {
         return (try? JSONDecoder().decode([String: Mapping].self, from: data)) ?? [:]
     }
 
-    public func setMapping(
-        id: String,
-        actionName: String,
-        params: [String: CapgoJSONValue]?
-    ) {
-        var map = load()
-        map[id] = Mapping(actionName: actionName, params: params)
+    private func persist(_ map: [String: Mapping]) {
         if let data = try? JSONEncoder().encode(map) {
             defaults.set(data, forKey: storageKey)
             defaults.synchronize()
         }
     }
 
-    public func mapping(for id: String) -> (actionName: String, params: [String: CapgoJSONValue]?)? {
-        guard let mapping = load()[id] else {
-            return nil
+    public func setMappings(_ entities: [CapgoSpotlightEntityRecord]) {
+        var map = load()
+        for entity in entities {
+            map[entity.id] = Mapping(
+                actionName: entity.actionName,
+                title: entity.title,
+                description: entity.description,
+                keywords: entity.keywords,
+                params: entity.params
+            )
         }
-        return (mapping.actionName, mapping.params)
+        persist(map)
+    }
+
+    public func removeMappings(for ids: [String]) {
+        guard !ids.isEmpty else {
+            return
+        }
+        var map = load()
+        for id in ids {
+            map.removeValue(forKey: id)
+        }
+        persist(map)
+    }
+
+    public func mapping(for id: String) -> Mapping? {
+        load()[id]
     }
 }

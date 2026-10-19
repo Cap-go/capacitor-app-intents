@@ -8,7 +8,7 @@ import AppIntents
 
 @objc(CapgoAppIntentsPlugin)
 public class CapgoAppIntentsPlugin: CAPPlugin, CAPBridgedPlugin {
-    private let pluginVersion: String = "0.1.0"
+    private let pluginVersion: String = "8.0.0"
     public let identifier = "CapgoAppIntentsPlugin"
     public let jsName = "CapgoAppIntents"
     public let pluginMethods: [CAPPluginMethod] = [
@@ -25,7 +25,9 @@ public class CapgoAppIntentsPlugin: CAPPlugin, CAPBridgedPlugin {
     override public func load() {
         super.load()
 
-        let appGroupId = getConfig().getString("appGroupId")
+        CapgoAppIntentsBootstrap.ensureConfigured()
+
+        let appGroupId = getConfig().getString("appGroupId") ?? CapgoAppIntentsConfiguration.appGroupId()
         let spotlightDomain = getConfig().getString("spotlightDomainIdentifier")
 
         CapgoAppIntentsBridge.shared.configure(appGroupId: appGroupId)
@@ -65,31 +67,6 @@ public class CapgoAppIntentsPlugin: CAPPlugin, CAPBridgedPlugin {
             data: ["invocation": record.toJSObject()],
             retainUntilConsumed: retainUntilConsumed
         )
-    }
-
-    @objc public func application(
-        _ application: UIApplication,
-        performActionFor shortcutItem: UIApplicationShortcutItem,
-        completionHandler: @escaping (Bool) -> Void
-    ) {
-        if let record = CapgoQuickActionsManager.shared.handle(shortcutItem: shortcutItem) {
-            emitInvocation(record)
-            completionHandler(true)
-            return
-        }
-        completionHandler(false)
-    }
-
-    @objc public func application(
-        _ application: UIApplication,
-        continue userActivity: NSUserActivity,
-        restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
-    ) -> Bool {
-        if let record = CapgoSpotlightIndexer.shared.handleUserActivity(userActivity) {
-            emitInvocation(record)
-            return true
-        }
-        return false
     }
 
     @objc func getPendingInvocations(_ call: CAPPluginCall) {

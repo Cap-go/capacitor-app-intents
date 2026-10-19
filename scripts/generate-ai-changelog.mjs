@@ -32,7 +32,14 @@ function resolveTags({ fromTag, toTag }) {
     throw new Error('Missing target tag. Set GITHUB_REF to refs/tags/<tag> or pass --to-tag.');
   }
 
-  const previousTag = fromTag ?? git(['describe', '--tags', '--abbrev=0', `${currentTag}^`]);
+  let previousTag = fromTag ?? '';
+  if (!previousTag) {
+    try {
+      previousTag = git(['describe', '--tags', '--abbrev=0', `${currentTag}^`]);
+    } catch {
+      previousTag = '';
+    }
+  }
   return { previousTag, currentTag };
 }
 

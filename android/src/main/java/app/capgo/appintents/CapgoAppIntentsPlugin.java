@@ -9,7 +9,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "CapgoAppIntents")
 public class CapgoAppIntentsPlugin extends Plugin {
 
-    private static final String pluginVersion = "0.1.0";
+    private static final String pluginVersion = "8.0.0";
     private static final String UNIMPLEMENTED =
         "CapgoAppIntents is only implemented on iOS. App Intents, Siri, Shortcuts, and Spotlight are not available on Android.";
 

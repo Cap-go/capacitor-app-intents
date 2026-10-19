@@ -1,46 +1,36 @@
-# Share Target Example App
+# App Intents example app
 
-This is an example Capacitor app that demonstrates the `@capgo/capacitor-share-target` plugin.
+Capacitor example for `@capgo/capacitor-app-intents`.
 
-## Running the Example
+## Setup
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+bun install
+bun run build
+bunx cap sync
+```
 
-2. Build the web assets:
-   ```bash
-   npm run build
-   ```
+## Siri shortcuts
 
-3. Sync with native platforms:
-   ```bash
-   npx cap sync
-   ```
+1. Edit `app-shortcuts.config.json`.
+2. From the example app directory:
 
-4. Run on Android:
-   ```bash
-   npx cap run android
-   ```
+```bash
+bun run generate:shortcuts
+```
 
-5. Run on iOS:
-   ```bash
-   npx cap run ios
-   ```
+3. Copy `ios-shortcuts/CapgoGeneratedAppShortcuts.swift` into `ios/App/App/` and add it to the **App** target in Xcode.
+4. Rebuild the iOS app.
 
-## Testing Share Functionality
+## iOS lifecycle
 
-### Android
-1. Build and install the app on your device
-2. Go to any app that supports sharing (e.g., Chrome, Gallery, Files)
-3. Select content to share (text, image, file, etc.)
-4. Choose "Share Target Example" from the share sheet
-5. The app will open and display the shared content
+Forward SceneDelegate events with `CapgoAppIntentsLifecycle`. See `../docs/ios-scene-integration.md`.
 
-### iOS
-1. Set up a Share Extension target in Xcode (see plugin README)
-2. Build and install the app on your device
-3. Go to any app that supports sharing
-4. Tap the share button and select your app
-5. The app will open and display the shared content
+## Run
+
+```bash
+bunx cap run ios
+bunx cap run android
+```
+
+Test Siri, Shortcuts, Spotlight, and Home Screen quick actions on a physical device or simulator with iOS 16+.

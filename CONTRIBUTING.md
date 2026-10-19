@@ -6,22 +6,22 @@ Thank you for your interest in contributing to this project!
 
 1. Install dependencies:
    ```bash
-   npm install
+   bun install
    ```
 
 2. Build the plugin:
    ```bash
-   npm run build
+   bun run build
    ```
 
 3. Run linters:
    ```bash
-   npm run lint
+   bun run lint
    ```
 
 4. Format code:
    ```bash
-   npm run fmt
+   bun run fmt
    ```
 
 ## Testing
@@ -29,19 +29,19 @@ Thank you for your interest in contributing to this project!
 ### Android
 
 ```bash
-npm run verify:android
+bun run verify:android
 ```
 
 ### iOS
 
 ```bash
-npm run verify:ios
+bun run verify:ios
 ```
 
 ### Web
 
 ```bash
-npm run verify:web
+bun run verify:web
 ```
 
 ## Pull Requests
@@ -59,8 +59,8 @@ This project uses:
 - Prettier for formatting
 - SwiftLint for Swift code
 
-Run `npm run fmt` to automatically format your code.
+Run `bun run fmt` to automatically format your code.
 
 ## Documentation
 
-Update the JSDoc comments in the source files and run `npm run docgen` to regenerate the documentation in the README.
+Update the JSDoc comments in the source files and run `bun run docgen` to regenerate the documentation in the README.

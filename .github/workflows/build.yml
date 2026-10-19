@@ -21,11 +21,12 @@ jobs:
       id-token: write
     steps:
       - name: Check out
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           filter: blob:none
-      - uses: oven-sh/setup-bun@v2
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
       - name: Install dependencies
         id: install_code
         run: bun i
@@ -42,7 +43,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: bun run changelog:ai
       - name: Setup Node.js for npm publish
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 24.x
           registry-url: 'https://registry.npmjs.org'
@@ -74,16 +75,16 @@ jobs:
             -f "client_payload[package]=$(node -p "require('./package.json').name")"
       - name: Create GitHub release
         id: create_release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@5113cdc90fd4d541c801c55356214017bf5ae34b # v3
         with:
           body: |
-            ## 🆕 Changelog
+            ## Changelog
             
             ${{ steps.changelog.outputs.result || '_Changelog was not generated automatically for this release._' }}
             
             ---
 
-            🔗 **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.changelog.outputs.from_tag || github.ref_name }}...${{ steps.changelog.outputs.to_tag || github.ref_name }}
+            Full Changelog: ${{ steps.changelog.outputs.from_tag != '' && format('https://github.com/{0}/compare/{1}...{2}', github.repository, steps.changelog.outputs.from_tag, steps.changelog.outputs.to_tag || github.ref_name) || format('https://github.com/{0}/releases/tag/{1}', github.repository, steps.changelog.outputs.to_tag || github.ref_name) }}
           make_latest: true
           token: '${{ secrets.PERSONAL_ACCESS_TOKEN }}'
           prerelease: ${{ contains(github.ref, '-alpha.') }}

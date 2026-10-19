@@ -10,7 +10,8 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:shortcuts": "node ../scripts/generate-app-shortcuts.mjs --config app-shortcuts.config.json --output ios-shortcuts/CapgoGeneratedAppShortcuts.swift"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.2",

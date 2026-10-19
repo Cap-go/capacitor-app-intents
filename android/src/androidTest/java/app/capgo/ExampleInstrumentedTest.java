@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("app.capgo.sharetarget.test", appContext.getPackageName());
+        assertEquals("app.capgo.appintents.test", appContext.getPackageName());
     }
 }

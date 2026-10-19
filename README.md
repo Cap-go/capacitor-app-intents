@@ -18,7 +18,7 @@ Ship Siri phrases, Shortcuts, Spotlight search, Home Screen quick actions, and A
 
 | Plugin version | Capacitor | Maintained |
 | -------------- | --------- | ---------- |
-| v0.x           | v8.x      | Yes        |
+| v8.x           | v8.x      | Yes        |
 
 ## Install
 
@@ -42,15 +42,24 @@ plugins: {
 ## Handle invocations
 
 ```ts
-import { CapgoAppIntents, drainPendingInvocations } from '@capgo/capacitor-app-intents';
+import {
+  CapgoAppIntents,
+  drainPendingInvocations,
+  useAppIntentsListener,
+} from '@capgo/capacitor-app-intents';
 
-await drainPendingInvocations(async (invocation) => {
+const handleInvocation = async (invocation) => {
   console.log(invocation.name, invocation.params);
+};
+
+await useAppIntentsListener(handleInvocation);
+
+// Or manually: register the listener before draining pending items.
+const listener = await CapgoAppIntents.addListener('appIntentInvoked', async (event) => {
+  await handleInvocation(event.invocation);
 });
 
-await CapgoAppIntents.addListener('appIntentInvoked', async (event) => {
-  await CapgoAppIntents.removePendingInvocation({ id: event.invocation.id });
-});
+await drainPendingInvocations(handleInvocation);
 ```
 
 ## Siri phrases and shortcut icons (codegen)
@@ -62,10 +71,14 @@ await CapgoAppIntents.addListener('appIntentInvoked', async (event) => {
 3. Generate Swift and add it to your iOS app target:
 
 ```bash
-npm run generate:shortcuts -- \
+node node_modules/@capgo/capacitor-app-intents/scripts/generate-app-shortcuts.mjs \
   --config app-shortcuts.config.json \
   --output ios/App/App/CapgoGeneratedAppShortcuts.swift
 ```
+
+Add the generated file to your iOS **App** target (not the plugin package). Link the plugin SPM package to the app so `CapgoDispatchAppIntent` resolves.
+
+On Capacitor 8, forward SceneDelegate quick actions and continued Spotlight activities using `CapgoAppIntentsLifecycle`. See `docs/ios-scene-integration.md`.
 
 4. Rebuild the iOS app. Siri and Shortcuts read the generated `AppShortcutsProvider`.
 

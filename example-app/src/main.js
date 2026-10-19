@@ -1,9 +1,6 @@
 import './style.css';
 import { Capacitor } from '@capacitor/core';
-import {
-  CapgoAppIntents,
-  drainPendingInvocations,
-} from '@capgo/capacitor-app-intents';
+import { CapgoAppIntents, useAppIntentsListener } from '@capgo/capacitor-app-intents';
 
 const statusEl = document.getElementById('plugin-status');
 const logEl = document.getElementById('invocation-log');
@@ -11,18 +8,30 @@ const logEl = document.getElementById('invocation-log');
 const invocations = [];
 
 function renderLog() {
+  logEl.replaceChildren();
   if (invocations.length === 0) {
     logEl.classList.add('empty');
     logEl.textContent = 'No invocations yet.';
     return;
   }
   logEl.classList.remove('empty');
-  logEl.innerHTML = invocations
-    .map(
-      (item) =>
-        `<div class="log-item"><strong>${item.name}</strong> <span class="muted">${item.source}</span><pre>${JSON.stringify(item.params, null, 2)}</pre></div>`,
-    )
-    .join('');
+  for (const item of invocations) {
+    const row = document.createElement('div');
+    row.className = 'log-item';
+
+    const title = document.createElement('strong');
+    title.textContent = item.name;
+
+    const source = document.createElement('span');
+    source.className = 'muted';
+    source.textContent = item.source;
+
+    const pre = document.createElement('pre');
+    pre.textContent = JSON.stringify(item.params, null, 2);
+
+    row.append(title, document.createTextNode(' '), source, pre);
+    logEl.append(row);
+  }
 }
 
 function pushInvocation(invocation) {
@@ -47,11 +56,7 @@ async function init() {
     statusEl.textContent = `Plugin ready (v${version}). Use Siri, Shortcuts, Spotlight, or the buttons below.`;
     statusEl.className = 'success';
 
-    await drainPendingInvocations(handleInvocation);
-    await CapgoAppIntents.addListener('appIntentInvoked', async (event) => {
-      await handleInvocation(event.invocation);
-      await CapgoAppIntents.removePendingInvocation({ id: event.invocation.id });
-    });
+    await useAppIntentsListener(handleInvocation);
   } catch (error) {
     statusEl.textContent = `Plugin error: ${error.message}`;
     statusEl.className = 'error';

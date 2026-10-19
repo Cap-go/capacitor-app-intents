@@ -1,6 +1,6 @@
 {
   "name": "@capgo/capacitor-app-intents",
-  "version": "0.1.0",
+  "version": "8.0.0",
   "description": "Siri, Shortcuts, Spotlight, Home Screen quick actions, and Apple App Intents for Capacitor apps with a JavaScript dispatch bridge.",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -52,7 +52,7 @@
     "build": "npm run clean && npm run docgen && tsc && rollup -c rollup.config.mjs",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
-    "prepublishOnly": "bun run build",
+    "prepack": "bun run build",
     "check:wiring": "node scripts/check-capacitor-plugin-wiring.mjs",
     "check:cap9-deprecated": "node scripts/check-cap9-deprecated.mjs",
     "example:install": "cd example-app && bun install --frozen-lockfile",

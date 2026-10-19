@@ -59,6 +59,11 @@ case "$platform" in
     fi
     if [ -f ios-shortcuts/CapgoGeneratedAppShortcuts.swift ] && [ -d ios/App/App ]; then
       cp ios-shortcuts/CapgoGeneratedAppShortcuts.swift ios/App/App/CapgoGeneratedAppShortcuts.swift
+      if [ -f ios/App/App.xcodeproj/project.pbxproj ]; then
+        node "$repo_root/scripts/patch-ios-app-swift-source.mjs" \
+          ios/App/App.xcodeproj/project.pbxproj \
+          CapgoGeneratedAppShortcuts.swift
+      fi
     fi
     if [ -f ios/App/CapApp-SPM/Package.swift ]; then
       sed -i.bak 's/.iOS(.v15)/.iOS(.v16)/g' ios/App/CapApp-SPM/Package.swift

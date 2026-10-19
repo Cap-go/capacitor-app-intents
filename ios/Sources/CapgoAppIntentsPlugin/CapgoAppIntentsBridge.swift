@@ -14,14 +14,19 @@ public final class CapgoAppIntentsBridge {
         CapgoSpotlightMappingStore.shared.configure(suiteName: suite)
     }
 
+    func deliverInvocation(_ record: CapgoInvocationRecord) {
+        onInvocationQueued?(record)
+    }
+
     @discardableResult
     public func enqueue(
         name: String,
         params: [String: Any] = [:],
         source: CapgoInvocationSource
     ) -> CapgoInvocationRecord {
+        CapgoAppIntentsBootstrap.ensureConfigured()
         let record = CapgoInvocationStore.shared.enqueue(name: name, params: params, source: source)
-        onInvocationQueued?(record)
+        deliverInvocation(record)
         return record
     }
 }

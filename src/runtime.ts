@@ -11,10 +11,24 @@ import { CapgoAppIntents } from './plugin-instance';
 export async function drainPendingInvocations(
   handler: (invocation: AppIntentInvocation) => Promise<void> | void,
 ): Promise<void> {
+  const seen = new Set<string>();
+
+  const processInvocation = async (invocation: AppIntentInvocation) => {
+    if (seen.has(invocation.id)) {
+      return;
+    }
+    seen.add(invocation.id);
+    try {
+      await handler(invocation);
+      await CapgoAppIntents.removePendingInvocation({ id: invocation.id });
+    } catch {
+      seen.delete(invocation.id);
+    }
+  };
+
   const { invocations } = await CapgoAppIntents.getPendingInvocations();
   for (const invocation of invocations) {
-    await handler(invocation);
-    await CapgoAppIntents.removePendingInvocation({ id: invocation.id });
+    await processInvocation(invocation);
   }
 }
 
@@ -26,9 +40,26 @@ export async function drainPendingInvocations(
 export async function useAppIntentsListener(
   handler: (invocation: AppIntentInvocation) => Promise<void> | void,
 ): Promise<PluginListenerHandle> {
-  await drainPendingInvocations(handler);
-  return CapgoAppIntents.addListener('appIntentInvoked', async (event) => {
-    await handler(event.invocation);
-    await CapgoAppIntents.removePendingInvocation({ id: event.invocation.id });
+  const seen = new Set<string>();
+
+  const processInvocation = async (invocation: AppIntentInvocation) => {
+    if (seen.has(invocation.id)) {
+      return;
+    }
+    seen.add(invocation.id);
+    try {
+      await handler(invocation);
+      await CapgoAppIntents.removePendingInvocation({ id: invocation.id });
+    } catch {
+      seen.delete(invocation.id);
+    }
+  };
+
+  const listener = await CapgoAppIntents.addListener('appIntentInvoked', async (event) => {
+    await processInvocation(event.invocation);
   });
+
+  await drainPendingInvocations(processInvocation);
+
+  return listener;
 }

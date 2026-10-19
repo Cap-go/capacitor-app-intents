@@ -29,12 +29,9 @@ public final class CapgoSpotlightIndexer {
     }
 
     public func index(entities: [CapgoSpotlightEntityRecord], completion: @escaping (Error?) -> Void) {
+        CapgoSpotlightMappingStore.shared.setMappings(entities)
+
         let items = entities.map { entity -> CSSearchableItem in
-            CapgoSpotlightMappingStore.shared.setMapping(
-                id: entity.id,
-                actionName: entity.actionName,
-                params: entity.params
-            )
             var attributes = CSSearchableItemAttributeSet(contentType: UTType.data)
             attributes.title = entity.title
             attributes.contentDescription = entity.description
@@ -93,6 +90,8 @@ public final class CapgoSpotlightIndexer {
                 return
             }
 
+            CapgoSpotlightMappingStore.shared.removeMappings(for: ids)
+
             #if canImport(AppIntents)
             if #available(iOS 18.0, *) {
                 Task {
@@ -120,10 +119,15 @@ public final class CapgoSpotlightIndexer {
             return nil
         }
 
-        let mapping = CapgoSpotlightMappingStore.shared.mapping(for: identifier)
-        let name = mapping?.actionName ?? "spotlightOpen"
+        guard let mapping = CapgoSpotlightMappingStore.shared.mapping(for: identifier) else {
+            let name = "spotlightOpen"
+            let params: [String: Any] = ["spotlightId": identifier]
+            return CapgoAppIntentsBridge.shared.enqueue(name: name, params: params, source: .spotlight)
+        }
+
+        let name = mapping.actionName
         var params: [String: Any] = ["spotlightId": identifier]
-        if let metadata = mapping?.params {
+        if let metadata = mapping.params {
             params["spotlightParams"] = CapgoJSONValue.encodeObject(metadata)
         }
 

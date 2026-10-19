@@ -46,9 +46,9 @@ public struct CapgoSpotlightIndexedEntityQuery: EntityQuery {
             return CapgoSpotlightIndexedEntity(
                 record: CapgoSpotlightEntityRecord(
                     id: identifier,
-                    title: identifier,
-                    description: nil,
-                    keywords: nil,
+                    title: mapping.title,
+                    description: mapping.description,
+                    keywords: mapping.keywords,
                     actionName: mapping.actionName,
                     params: mapping.params
                 )

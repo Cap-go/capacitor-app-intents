@@ -19,4 +19,4 @@ Phrases and shortcut icons are compile time Swift literals. Use `npm run generat
 
 ## Mail schema
 
-`performAppleSchemaTemplate` with `mail_create_draft` only queues `appleSchemaMailCreateDraft` for JavaScript. It does not call Mail APIs.
+`performAppleSchemaTemplate` with `mail_create_draft` only queues `appleSchemaMailCreateDraft` for JavaScript. It does not call Mail APIs. The mail template path requires iOS 18 or later when Apple exposes the underlying schema APIs; on earlier iOS versions use your own compose UI.
