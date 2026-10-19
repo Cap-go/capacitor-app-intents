@@ -1,0 +1,17 @@
+{
+  "providerName": "CapgoGeneratedAppShortcuts",
+  "shortcuts": [
+    {
+      "actionName": "orderDish",
+      "shortTitle": "Order dish",
+      "systemImageName": "fork.knife",
+      "phrases": ["Order a dish in {{applicationName}}"]
+    },
+    {
+      "actionName": "openMenu",
+      "shortTitle": "Open menu",
+      "systemImageName": "list.bullet",
+      "phrases": ["Open the menu in {{applicationName}}"]
+    }
+  ]
+}

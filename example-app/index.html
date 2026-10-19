@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Capgo App Intents Example</title>
+  </head>
+  <body>
+    <main class="page">
+      <header>
+        <h1>Capgo App Intents</h1>
+        <p id="plugin-status" class="status">Loading plugin…</p>
+      </header>
+
+      <section class="card">
+        <h2>Invocation log</h2>
+        <div id="invocation-log" class="log empty">No invocations yet.</div>
+        <button id="clear-log" type="button">Clear log</button>
+      </section>
+
+      <section class="card">
+        <h2>Entity catalog</h2>
+        <p>Feeds Siri and Shortcuts parameters from JavaScript.</p>
+        <button id="seed-catalog" type="button">Seed menu catalog</button>
+      </section>
+
+      <section class="card">
+        <h2>Siri phrases (native codegen)</h2>
+        <p>
+          App Shortcut phrases are compile time literals. Edit
+          <code>app-shortcuts.config.json</code>, run
+          <code>bun run generate:shortcuts</code>,
+          copy the file into the iOS app target, then rebuild.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Spotlight</h2>
+        <button id="index-spotlight" type="button">Index sample dishes</button>
+        <button id="remove-spotlight" type="button">Remove spotlight items</button>
+      </section>
+
+      <section class="card">
+        <h2>Home Screen quick actions</h2>
+        <button id="set-quick-actions" type="button">Set quick actions</button>
+      </section>
+
+      <section class="card">
+        <h2>Apple schema (alpha)</h2>
+        <button id="mail-schema" type="button">Queue mail draft handler</button>
+      </section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

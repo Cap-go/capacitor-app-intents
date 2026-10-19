@@ -1,0 +1,102 @@
+:root {
+  color-scheme: light dark;
+  font-family:
+    'SF Pro Text',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #1f2937, #0f172a 55%);
+  color: #f8fafc;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+}
+
+.status {
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: #111827;
+}
+
+.status.success {
+  border: 1px solid #22c55e;
+}
+
+.status.warn {
+  border: 1px solid #f59e0b;
+}
+
+.status.error {
+  border: 1px solid #ef4444;
+}
+
+.card {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid #334155;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+button {
+  border: 0;
+  border-radius: 0.65rem;
+  padding: 0.6rem 0.9rem;
+  background: #38bdf8;
+  color: #0f172a;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.05);
+}
+
+.log {
+  display: grid;
+  gap: 0.75rem;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.log.empty {
+  opacity: 0.7;
+}
+
+.log-item {
+  background: #0b1220;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+.log-item pre {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+}
+
+.muted {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
