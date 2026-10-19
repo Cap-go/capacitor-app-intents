@@ -30,7 +30,7 @@ function patchPbxproj(pbxPath, fileName) {
   );
 
   const appGroupMatch = pbx.match(
-    /(\t\t[A-F0-9]+ \/* App \*\/ = \{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = \(\n)([\s\S]*?)(\t\t\t\);)/,
+    /(\t\t[A-F0-9]+ \/\* App \*\/ = \{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = \(\n)([\s\S]*?)(\t\t\t\);)/,
   );
   if (!appGroupMatch) {
     throw new Error('Could not find App PBXGroup in project.pbxproj');
@@ -41,14 +41,14 @@ function patchPbxproj(pbxPath, fileName) {
   );
 
   const sourcesMatch = pbx.match(
-    /(\t\t[A-F0-9]+ \/* Sources \*\/ = \{\n\t\t\tisa = PBXSourcesBuildPhase;\n[\s\S]*?files = \(\n)([\s\S]*?)(\t\t\t\);)/,
+    /(\t\t[A-F0-9]+ \/\* Sources \*\/ = \{[\s\S]*?files = \(\n)([\s\S]*?)(\n\t\t\t\);\n\t\t\trunOnlyForDeploymentPostprocessing)/,
   );
   if (!sourcesMatch) {
     throw new Error('Could not find PBXSourcesBuildPhase in project.pbxproj');
   }
   pbx = pbx.replace(
     sourcesMatch[0],
-    `${sourcesMatch[1]}${sourcesMatch[2]}\t\t\t\t${buildFileId} /* ${fileName} in Sources */,\n${sourcesMatch[3]}`,
+    `${sourcesMatch[1]}${sourcesMatch[2].trimEnd()}\n\t\t\t\t${buildFileId} /* ${fileName} in Sources */,\n${sourcesMatch[3]}`,
   );
 
   fs.writeFileSync(pbxPath, pbx, 'utf8');
