@@ -11,7 +11,6 @@ public final class CapgoAppIntentsBridge {
         let suite = appGroupId?.isEmpty == false ? appGroupId : nil
         CapgoInvocationStore.shared.configure(suiteName: suite)
         CapgoEntityCatalogStore.shared.configure(suiteName: suite)
-        CapgoShortcutDefinitionStore.shared.configure(suiteName: suite)
         CapgoSpotlightMappingStore.shared.configure(suiteName: suite)
     }
 

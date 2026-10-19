@@ -52,6 +52,14 @@ case "$platform" in
       bunx cap add ios
     fi
     bunx cap sync ios
+    if [ -f app-shortcuts.config.json ]; then
+      node "$repo_root/scripts/generate-app-shortcuts.mjs" \
+        --config app-shortcuts.config.json \
+        --output ios-shortcuts/CapgoGeneratedAppShortcuts.swift
+    fi
+    if [ -f ios-shortcuts/CapgoGeneratedAppShortcuts.swift ] && [ -d ios/App/App ]; then
+      cp ios-shortcuts/CapgoGeneratedAppShortcuts.swift ios/App/App/CapgoGeneratedAppShortcuts.swift
+    fi
     if [ -f ios/App/CapApp-SPM/Package.swift ]; then
       sed -i.bak 's/.iOS(.v15)/.iOS(.v16)/g' ios/App/CapApp-SPM/Package.swift
       rm -f ios/App/CapApp-SPM/Package.swift.bak

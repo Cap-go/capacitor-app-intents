@@ -78,29 +78,6 @@ document.getElementById('seed-catalog')?.addEventListener('click', async () => {
   });
 });
 
-document.getElementById('register-shortcuts')?.addEventListener('click', async () => {
-  await CapgoAppIntents.setShortcutDefinitions({
-    shortcuts: [
-      {
-        actionName: 'orderDish',
-        shortTitle: 'Order dish',
-        systemImageName: 'fork.knife',
-        phrases: ['Order a dish in {{applicationName}}'],
-      },
-      {
-        actionName: 'openMenu',
-        shortTitle: 'Open menu',
-        systemImageName: 'list.bullet',
-        phrases: ['Open the menu in {{applicationName}}'],
-      },
-    ],
-  });
-});
-
-document.getElementById('refresh-shortcuts')?.addEventListener('click', async () => {
-  await CapgoAppIntents.refreshShortcuts();
-});
-
 document.getElementById('index-spotlight')?.addEventListener('click', async () => {
   await CapgoAppIntents.indexSpotlightEntities({
     entities: [

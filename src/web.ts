@@ -25,14 +25,6 @@ export class CapgoAppIntentsWeb extends WebPlugin implements CapgoAppIntentsPlug
     return this.reject();
   }
 
-  async setShortcutDefinitions(): Promise<void> {
-    return this.reject();
-  }
-
-  async refreshShortcuts(): Promise<void> {
-    return this.reject();
-  }
-
   async setHomeScreenShortcutItems(): Promise<void> {
     return this.reject();
   }

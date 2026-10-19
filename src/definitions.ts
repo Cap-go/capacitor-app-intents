@@ -85,41 +85,6 @@ export interface EntityCatalogEntry {
 }
 
 /**
- * Shortcut phrase registration for the built in dispatch intent.
- *
- * @since 0.1.0
- */
-export interface AppShortcutDefinition {
-  /**
-   * Action name forwarded to JavaScript when the shortcut runs.
-   *
-   * @since 0.1.0
-   */
-  actionName: string;
-
-  /**
-   * Short title in the Shortcuts app.
-   *
-   * @since 0.1.0
-   */
-  shortTitle: string;
-
-  /**
-   * SF Symbol name.
-   *
-   * @since 0.1.0
-   */
-  systemImageName?: string;
-
-  /**
-   * Siri phrase templates. Use `{{applicationName}}` for the app name.
-   *
-   * @since 0.1.0
-   */
-  phrases: string[];
-}
-
-/**
  * Home Screen quick action item.
  *
  * @since 0.1.0
@@ -163,6 +128,9 @@ export interface HomeScreenShortcutItem {
 
 /**
  * Spotlight searchable entity.
+ *
+ * Indexed on iOS 16 with Core Spotlight. On iOS 18 and later the plugin also
+ * donates an `IndexedEntity` for semantic Spotlight search.
  *
  * @since 0.1.0
  */
@@ -264,23 +232,6 @@ export interface CapgoAppIntentsPlugin {
   setEntityCatalog(options: { type: string; entries: EntityCatalogEntry[] }): Promise<void>;
 
   /**
-   * Register Siri shortcut phrases for the built in dispatch intent.
-   *
-   * Changing phrases requires a native rebuild for full Siri coverage.
-   * Call `refreshShortcuts()` after updates.
-   *
-   * @since 0.1.0
-   */
-  setShortcutDefinitions(options: { shortcuts: AppShortcutDefinition[] }): Promise<void>;
-
-  /**
-   * Ask the system to refresh donated shortcuts after `setShortcutDefinitions`.
-   *
-   * @since 0.1.0
-   */
-  refreshShortcuts(): Promise<void>;
-
-  /**
    * Replace Home Screen quick actions (UIApplicationShortcutItems).
    *
    * @since 0.1.0
@@ -289,6 +240,9 @@ export interface CapgoAppIntentsPlugin {
 
   /**
    * Index Spotlight items for your app domain.
+   *
+   * Uses `CSSearchableItem` on iOS 16 and later. On iOS 18 and later also donates
+   * `IndexedEntity` values through `indexAppEntities` and `associateAppEntity`.
    *
    * @since 0.1.0
    */
@@ -302,9 +256,10 @@ export interface CapgoAppIntentsPlugin {
   removeSpotlightEntities(options: { ids: string[] }): Promise<void>;
 
   /**
-   * Run an opt in Apple schema template when the OS exposes a public API.
+   * Queue a JavaScript handler for an alpha Apple schema template.
    *
-   * Alpha. See README for supported templates and gaps.
+   * This does not call private Mail or system schema APIs. It only enqueues an
+   * invocation (for example `appleSchemaMailCreateDraft`) for your app code to handle.
    *
    * @since 0.1.0
    */

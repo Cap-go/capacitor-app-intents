@@ -13,7 +13,9 @@
     "ios/Sources",
     "ios/Tests",
     "Package.swift",
-    "CapgoCapacitorAppIntents.podspec"
+    "CapgoCapacitorAppIntents.podspec",
+    "scripts/generate-app-shortcuts.mjs",
+    "app-shortcuts.config.example.json"
   ],
   "author": "Cap-go <contact@capgo.app>",
   "license": "MPL-2.0",
@@ -44,7 +46,9 @@
     "eslint": "eslint .",
     "prettier": "prettier-pretty-check \"**/*.{css,html,ts,js,java}\" --plugin=prettier-plugin-java",
     "swiftlint": "node-swiftlint",
-    "docgen": "docgen --api CapgoAppIntentsPlugin --output-json dist/docs.json",
+    "docgen": "docgen --api CapgoAppIntentsPlugin --output-readme README.md --output-json dist/docs.json",
+    "generate:shortcuts": "node scripts/generate-app-shortcuts.mjs",
+    "test:shortcuts-codegen": "node --test scripts/generate-app-shortcuts.test.mjs",
     "build": "npm run clean && npm run docgen && tsc && rollup -c rollup.config.mjs",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",

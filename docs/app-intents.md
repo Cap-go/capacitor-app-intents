@@ -9,38 +9,14 @@ bun add @capgo/capacitor-app-intents
 bunx cap sync
 ```
 
-## iOS setup
+## Siri phrases
 
-1. Target iOS 16 or later.
-2. Add an App Group if you use extensions and set `CapgoAppIntents.appGroupId` in `capacitor.config`.
-3. Optional: add Swift files in your app target for custom `AppIntent` types. Import the plugin module and call `CapgoAppIntentsBridge.shared.enqueue(name:params:source:)`.
+Phrases and shortcut icons are compile time Swift literals. Use `npm run generate:shortcuts` with `app-shortcuts.config.json`. See the plugin README.
 
-## Handle invocations
+## Spotlight
 
-```ts
-import { CapgoAppIntents, drainPendingInvocations } from '@capgo/capacitor-app-intents';
+`indexSpotlightEntities` uses Core Spotlight on iOS 16+. On iOS 18+ it also donates `IndexedEntity` values.
 
-await drainPendingInvocations(async (invocation) => {
-  if (invocation.name === 'orderDish') {
-    // route in your app
-  }
-});
+## Mail schema
 
-await CapgoAppIntents.addListener('appIntentInvoked', async (event) => {
-  // same handler
-  await CapgoAppIntents.removePendingInvocation({ id: event.invocation.id });
-});
-```
-
-## Entity catalogs
-
-```ts
-await CapgoAppIntents.setEntityCatalog({
-  type: 'dish',
-  entries: [{ id: 'pasta', title: 'Pasta' }],
-});
-```
-
-## Alpha Apple schemas
-
-`performAppleSchemaTemplate` queues JavaScript handlers. Native Mail schema intents are not exposed to third party apps yet. See the plugin README for current templates.
+`performAppleSchemaTemplate` with `mail_create_draft` only queues `appleSchemaMailCreateDraft` for JavaScript. It does not call Mail APIs.

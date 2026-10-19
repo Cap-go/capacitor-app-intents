@@ -33,16 +33,6 @@ public class CapgoAppIntentsPlugin extends Plugin {
     }
 
     @PluginMethod
-    public void setShortcutDefinitions(PluginCall call) {
-        rejectUnimplemented(call);
-    }
-
-    @PluginMethod
-    public void refreshShortcuts(PluginCall call) {
-        rejectUnimplemented(call);
-    }
-
-    @PluginMethod
     public void setHomeScreenShortcutItems(PluginCall call) {
         rejectUnimplemented(call);
     }

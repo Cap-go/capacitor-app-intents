@@ -25,9 +25,13 @@
       </section>
 
       <section class="card">
-        <h2>Shortcuts</h2>
-        <button id="register-shortcuts" type="button">Register sample shortcuts</button>
-        <button id="refresh-shortcuts" type="button">Refresh shortcuts</button>
+        <h2>Siri phrases (native codegen)</h2>
+        <p>
+          App Shortcut phrases are compile time literals. Edit
+          <code>app-shortcuts.config.json</code>, run
+          <code>npm run generate:shortcuts -- --config app-shortcuts.config.json --output ios-shortcuts/CapgoGeneratedAppShortcuts.swift</code>,
+          copy the file into the iOS app target, then rebuild.
+        </p>
       </section>
 
       <section class="card">
@@ -43,7 +47,7 @@
 
       <section class="card">
         <h2>Apple schema (alpha)</h2>
-        <button id="mail-schema" type="button">Queue mail draft template</button>
+        <button id="mail-schema" type="button">Queue mail draft handler</button>
       </section>
     </main>
     <script type="module" src="/src/main.js"></script>

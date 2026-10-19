@@ -15,8 +15,6 @@ public class CapgoAppIntentsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "getPendingInvocations", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "removePendingInvocation", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setEntityCatalog", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "setShortcutDefinitions", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "refreshShortcuts", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setHomeScreenShortcutItems", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "indexSpotlightEntities", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "removeSpotlightEntities", returnType: CAPPluginReturnPromise),
@@ -137,49 +135,6 @@ public class CapgoAppIntentsPlugin: CAPPlugin, CAPBridgedPlugin {
 
         CapgoEntityCatalogStore.shared.setCatalog(type: type, entries: entries)
         call.resolve()
-    }
-
-    @objc func setShortcutDefinitions(_ call: CAPPluginCall) {
-        guard let rawShortcuts = call.getArray("shortcuts") else {
-            call.reject("shortcuts is required")
-            return
-        }
-
-        let shortcuts: [CapgoShortcutDefinitionRecord] = rawShortcuts.compactMap { value in
-            guard let dict = value as? [String: Any],
-                  let actionName = dict["actionName"] as? String,
-                  let shortTitle = dict["shortTitle"] as? String,
-                  let phrases = dict["phrases"] as? [String] else {
-                return nil
-            }
-            let systemImageName = dict["systemImageName"] as? String
-            return CapgoShortcutDefinitionRecord(
-                actionName: actionName,
-                shortTitle: shortTitle,
-                systemImageName: systemImageName,
-                phrases: phrases
-            )
-        }
-
-        CapgoShortcutDefinitionStore.shared.setShortcuts(shortcuts)
-        call.resolve()
-    }
-
-    @objc func refreshShortcuts(_ call: CAPPluginCall) {
-        #if canImport(AppIntents)
-        if #available(iOS 16.4, *) {
-            Task {
-                try? await CapgoAppShortcutsProvider.updateAppShortcutParameters()
-                call.resolve()
-            }
-            return
-        }
-        if #available(iOS 16.0, *) {
-            call.resolve()
-            return
-        }
-        #endif
-        call.reject("App Shortcuts require iOS 16 or later")
     }
 
     @objc func setHomeScreenShortcutItems(_ call: CAPPluginCall) {
