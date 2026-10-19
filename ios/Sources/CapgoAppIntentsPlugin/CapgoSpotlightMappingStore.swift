@@ -66,7 +66,7 @@ public final class CapgoSpotlightMappingStore {
         persist(map)
     }
 
-    public func mapping(for id: String) -> Mapping? {
+    func mapping(for id: String) -> Mapping? {
         load()[id]
     }
 }
