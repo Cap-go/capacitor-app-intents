@@ -52,6 +52,10 @@ case "$platform" in
       bunx cap add ios
     fi
     bunx cap sync ios
+    if [ -f ios/App/CapApp-SPM/Package.swift ]; then
+      sed -i.bak 's/.iOS(.v15)/.iOS(.v16)/g' ios/App/CapApp-SPM/Package.swift
+      rm -f ios/App/CapApp-SPM/Package.swift.bak
+    fi
     rm -rf "$HOME/Library/Caches/org.swift.swiftpm/artifacts"/https___github_com_ionic_team_capacitor_swift_pm_releases_download_*
     xcodebuild \
       -project ios/App/App.xcodeproj \
