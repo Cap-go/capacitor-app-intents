@@ -14,15 +14,7 @@ public enum CapgoIntentResultSupport {
     public static func performReturningString(
         options: CapgoIntentPerformOptions
     ) async throws -> some IntentResult {
-        let outcome = try await CapgoIntentPerformExecutor.perform(options: options)
-
-        if let message = outcome.dialogMessage ?? outcome.valueSummary {
-            if #available(iOS 17.0, *) {
-                return .result(dialog: IntentDialog(stringLiteral: message))
-            }
-            return .result()
-        }
-
+        _ = try await CapgoIntentPerformExecutor.perform(options: options)
         return .result()
     }
 
