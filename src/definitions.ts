@@ -12,6 +12,60 @@ export type AppIntentInvocationSource = 'app_intent' | 'spotlight' | 'quick_acti
  *
  * @since 0.1.0
  */
+/**
+ * Result payload returned to Siri after JavaScript completes an awaiting invocation.
+ *
+ * Typed codegen intents on iOS 17+ surface `value` and optional `message`/`summary` as a
+ * `ReturnsValue<String>` string to Siri. The generic `CapgoDispatchAppIntent` path still
+ * completes JavaScript but does not return that string to Siri on iOS 16.
+ *
+ * @since 8.2.0
+ */
+export interface AppIntentInvocationResult {
+  /**
+   * Primary string Siri can speak or chain on.
+   *
+   * @since 8.2.0
+   */
+  value?: string;
+
+  /**
+   * Optional dialog Siri speaks to the user.
+   *
+   * @since 8.2.0
+   */
+  message?: string;
+
+  /**
+   * Optional summary used when `value` is omitted.
+   *
+   * @since 8.2.0
+   */
+  summary?: string;
+
+  /**
+   * Extra JSON-safe fields for app logic. Only `value`, `message`, and `summary`
+   * surface to Siri on the iOS 17+ awaiting path; other keys are not spoken or chained.
+   *
+   * @since 8.2.0
+   */
+  [key: string]: unknown;
+}
+
+/**
+ * Optional on-screen entity hint for Siri disambiguation.
+ *
+ * This complements native SwiftUI entity annotations. Use it from JavaScript when
+ * your web UI shows catalog items Siri should prefer.
+ *
+ * @since 8.2.0
+ */
+export interface OnscreenEntityReference {
+  catalogType: string;
+  entityId: string;
+  title?: string;
+}
+
 export interface AppIntentInvocation {
   /**
    * Stable id for this queued invocation.
@@ -47,6 +101,13 @@ export interface AppIntentInvocation {
    * @since 0.1.0
    */
   createdAt: number;
+
+  /**
+   * When true, the native side is waiting for `completeInvocation` or `failInvocation`.
+   *
+   * @since 8.2.0
+   */
+  awaitingResult?: boolean;
 }
 
 /**
@@ -221,6 +282,34 @@ export interface CapgoAppIntentsPlugin {
    * @since 0.1.0
    */
   removePendingInvocation(options: { id: string }): Promise<void>;
+
+  /**
+   * Resolve an invocation that is awaiting a JavaScript result for Siri.
+   *
+   * @since 8.2.0
+   */
+  completeInvocation(options: { id: string; result: AppIntentInvocationResult; dialog?: string }): Promise<void>;
+
+  /**
+   * Fail an invocation that is awaiting a JavaScript result.
+   *
+   * @since 8.2.0
+   */
+  failInvocation(options: { id: string; error: string }): Promise<void>;
+
+  /**
+   * Publish optional on-screen entity context for catalog queries.
+   *
+   * @since 8.2.0
+   */
+  setOnscreenEntityContext(options: { entities: OnscreenEntityReference[] }): Promise<void>;
+
+  /**
+   * Clear on-screen entity hints when your UI no longer shows those rows.
+   *
+   * @since 8.2.0
+   */
+  clearOnscreenEntityContext(): Promise<void>;
 
   /**
    * Persist an entity catalog for a given type string.

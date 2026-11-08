@@ -15,13 +15,17 @@ public struct CapgoInvocationRecord: Codable, Equatable {
     public let createdAt: TimeInterval
 
     public func toJSObject() -> [String: Any] {
-        return [
+        var object: [String: Any] = [
             "id": id,
             "name": name,
             "params": CapgoJSONValue.encodeObject(params),
             "source": source.rawValue,
             "createdAt": Int(createdAt)
         ]
+        if let awaiting = params["__capgoAwaitingResult"], case .bool(let flag) = awaiting, flag {
+            object["awaitingResult"] = true
+        }
+        return object
     }
 }
 
@@ -96,7 +100,7 @@ public final class CapgoInvocationStore {
     private init() {}
 
     public func configure(suiteName: String?) {
-        self.suiteName = suiteName
+        CapgoUserDefaultsSuiteSupport.applySuiteName(&self.suiteName, candidate: suiteName)
     }
 
     private var defaults: UserDefaults {
@@ -118,7 +122,8 @@ public final class CapgoInvocationStore {
     public func enqueue(
         name: String,
         params: [String: Any],
-        source: CapgoInvocationSource
+        source: CapgoInvocationSource,
+        id: String? = nil
     ) -> CapgoInvocationRecord {
         queue.sync {
             var encodedParams: [String: CapgoJSONValue] = [:]
@@ -127,7 +132,7 @@ public final class CapgoInvocationStore {
             }
 
             let record = CapgoInvocationRecord(
-                id: UUID().uuidString,
+                id: id ?? UUID().uuidString,
                 name: name,
                 params: encodedParams,
                 source: source,

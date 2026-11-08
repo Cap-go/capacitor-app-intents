@@ -11,7 +11,9 @@
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "generate:shortcuts": "node ../scripts/generate-app-shortcuts.mjs --config app-shortcuts.config.json --output ios-shortcuts/CapgoGeneratedAppShortcuts.swift"
+    "generate:shortcuts": "node ../scripts/generate-app-shortcuts.mjs --config app-shortcuts.config.json --output ios-shortcuts/CapgoGeneratedAppShortcuts.swift",
+    "generate:typed-intents": "node ../scripts/generate-typed-intents.mjs --config app-intents.codegen.json --output-dir ios-shortcuts/GeneratedAppIntents",
+    "generate:skills-bundle": "node ../scripts/generate-skills-bundle.mjs --config app-intents.codegen.json --output ios-shortcuts/Skills.skillsbundle"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.2",

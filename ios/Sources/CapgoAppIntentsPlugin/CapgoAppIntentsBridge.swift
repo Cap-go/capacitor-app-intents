@@ -12,6 +12,7 @@ public final class CapgoAppIntentsBridge {
         CapgoInvocationStore.shared.configure(suiteName: suite)
         CapgoEntityCatalogStore.shared.configure(suiteName: suite)
         CapgoSpotlightMappingStore.shared.configure(suiteName: suite)
+        CapgoOnscreenEntityContextStore.shared.configure(suiteName: suite)
     }
 
     func deliverInvocation(_ record: CapgoInvocationRecord) {
@@ -22,10 +23,11 @@ public final class CapgoAppIntentsBridge {
     public func enqueue(
         name: String,
         params: [String: Any] = [:],
-        source: CapgoInvocationSource
+        source: CapgoInvocationSource,
+        id: String? = nil
     ) -> CapgoInvocationRecord {
         CapgoAppIntentsBootstrap.ensureConfigured()
-        let record = CapgoInvocationStore.shared.enqueue(name: name, params: params, source: source)
+        let record = CapgoInvocationStore.shared.enqueue(name: name, params: params, source: source, id: id)
         deliverInvocation(record)
         return record
     }
