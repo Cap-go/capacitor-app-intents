@@ -53,6 +53,10 @@ export function validateParameters(parameters = []) {
     if (!parameter.name || !parameter.title || !parameter.type) {
       throw new Error('each intent parameter needs name, title, and type');
     }
+    validateSwiftParameterName(parameter.name);
+    if (parameter.entityType) {
+      validateSwiftStructName(parameter.entityType, `parameter ${parameter.name} entityType`);
+    }
     const allowed = new Set(['string', 'int', 'bool', 'entity']);
     if (!allowed.has(parameter.type)) {
       throw new Error(`unsupported parameter type ${parameter.type}`);
@@ -63,15 +67,52 @@ export function validateParameters(parameters = []) {
   }
 }
 
+const SWIFT_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const SWIFT_STRUCT_NAME = /^[A-Z][A-Za-z0-9]*$/;
+
+export function validateSwiftStructName(name, label) {
+  if (typeof name !== 'string' || !SWIFT_STRUCT_NAME.test(name)) {
+    throw new Error(`${label} must be a valid Swift type name: ${name}`);
+  }
+  if (name.includes('/') || name.includes('..')) {
+    throw new Error(`${label} must not contain path separators: ${name}`);
+  }
+}
+
+export function validateSwiftParameterName(name) {
+  if (typeof name !== 'string' || !SWIFT_IDENTIFIER.test(name)) {
+    throw new Error(`parameter name must be a valid Swift identifier: ${name}`);
+  }
+}
+
 export function validateCodegenConfig(config) {
   if (!config || typeof config !== 'object') {
     throw new Error('config must be an object');
+  }
+
+  if (config.defaultInvocationTimeoutSeconds !== undefined) {
+    const timeout = Number(config.defaultInvocationTimeoutSeconds);
+    if (!Number.isFinite(timeout) || timeout < 1 || timeout > 600) {
+      throw new Error('defaultInvocationTimeoutSeconds must be between 1 and 600');
+    }
+  }
+
+  if (config.skills !== undefined && !Array.isArray(config.skills)) {
+    throw new Error('config.skills must be an array when present');
   }
 
   if (Array.isArray(config.intents)) {
     for (const intent of config.intents) {
       if (!intent.name || !intent.actionName || !intent.title) {
         throw new Error('each intent needs name, actionName, and title');
+      }
+      validateSwiftStructName(intent.name, 'intent.name');
+      validateSwiftParameterName(intent.actionName);
+      if (intent.timeoutSeconds !== undefined) {
+        const timeout = Number(intent.timeoutSeconds);
+        if (!Number.isFinite(timeout) || timeout < 1 || timeout > 600) {
+          throw new Error(`intent ${intent.name} timeoutSeconds must be between 1 and 600`);
+        }
       }
       validateParameters(intent.parameters ?? []);
     }
@@ -148,24 +189,43 @@ export function parameterSummaryArgs(parameters) {
   return parameters.map((parameter) => `\\(.\\$${parameter.name})`).join(', ');
 }
 
+function catalogEntityParamLines(parameter) {
+  const inner = [
+    `            params["${parameter.name}CatalogType"] = ${parameter.name}.catalogType`,
+    `            params["${parameter.name}EntityId"] = ${parameter.name}.entityId`,
+    `            params["${parameter.name}Title"] = ${parameter.name}.title`,
+  ].join('\n');
+  if (parameter.optional) {
+    return [
+      `        if let ${parameter.name} {`,
+      inner,
+      '        }',
+    ];
+  }
+  return [inner];
+}
+
+function genericEntityParamLines(parameter) {
+  const inner = [`            params["${parameter.name}Id"] = ${parameter.name}.id`];
+  if (parameter.optional) {
+    return [
+      `        if let ${parameter.name} {`,
+      ...inner,
+      '        }',
+    ];
+  }
+  return inner;
+}
+
 export function collectParamsFromParameters(parameters) {
   const lines = [];
   for (const parameter of parameters) {
     if (parameter.type === 'entity') {
-      const prefix = parameter.optional
-        ? `        if let ${parameter.name} {`
-        : '';
-      const suffix = parameter.optional ? '        }' : '';
-      const inner = [
-        `            params["${parameter.name}CatalogType"] = ${parameter.name}.catalogType`,
-        `            params["${parameter.name}EntityId"] = ${parameter.name}.entityId`,
-        `            params["${parameter.name}Title"] = ${parameter.name}.title`,
-      ].join('\n');
-      if (parameter.optional) {
-        lines.push(prefix, inner, suffix);
-      } else {
-        lines.push(inner);
-      }
+      const block =
+        parameter.entityType === 'CapgoCatalogEntity'
+          ? catalogEntityParamLines(parameter)
+          : genericEntityParamLines(parameter);
+      lines.push(...block);
       continue;
     }
     lines.push(`        params["${parameter.name}"] = ${parameter.name}`);

@@ -64,20 +64,22 @@ public struct CapgoCatalogEntityQuery: EntityQuery {
         CapgoAppIntentsBootstrap.ensureConfigured()
         let onscreen = CapgoOnscreenEntityContextStore.shared.entities()
         var prioritized: [CapgoCatalogEntity] = []
+        var seenPrioritized = Set<String>()
         for reference in onscreen {
             if let entry = CapgoEntityCatalogStore.shared.entry(
                 catalogType: reference.catalogType,
                 entityId: reference.entityId
             ) {
-                prioritized.append(
-                    CapgoCatalogEntity(
-                        catalogType: reference.catalogType,
-                        entityId: entry.id,
-                        title: entry.title,
-                        subtitle: entry.subtitle,
-                        metadata: entry.metadata
-                    )
+                let entity = CapgoCatalogEntity(
+                    catalogType: reference.catalogType,
+                    entityId: entry.id,
+                    title: entry.title,
+                    subtitle: entry.subtitle,
+                    metadata: entry.metadata
                 )
+                if seenPrioritized.insert(entity.id).inserted {
+                    prioritized.append(entity)
+                }
             }
         }
         let all = try await allCatalogEntities()
@@ -116,6 +118,9 @@ public struct CapgoCatalogEntityQuery: EntityQuery {
             case .string(let stringValue):
                 return stringValue == expected
             case .number(let numberValue):
+                if let parsed = Double(expected) {
+                    return numberValue == parsed
+                }
                 return String(numberValue) == expected
             case .bool(let boolValue):
                 return String(boolValue) == expected.lowercased()
@@ -164,4 +169,7 @@ public struct CapgoCatalogEntityQuery: EntityQuery {
         return false
     }
 }
+
+@available(iOS 17.0, *)
+extension CapgoCatalogEntityQuery: EntityStringQuery {}
 #endif

@@ -132,34 +132,28 @@ final class CapgoAppIntentsPluginTests: XCTestCase {
         let firstId = UUID().uuidString
         let secondId = UUID().uuidString
 
-        let firstTask = Task {
-            try await CapgoInvocationCompletionCoordinator.shared.registerAwaiting(
-                id: firstId,
-                timeoutSeconds: 2
-            )
+        try CapgoInvocationCompletionCoordinator.shared.armAwaiting(id: firstId, timeoutSeconds: 2)
+        let firstWait = Task {
+            try await CapgoInvocationCompletionCoordinator.shared.awaitCompletion(id: firstId)
         }
-        try await Task.sleep(nanoseconds: 20_000_000)
         CapgoInvocationCompletionCoordinator.shared.complete(
             id: firstId,
             result: ["value": "first"],
             dialog: nil
         )
 
-        let secondTask = Task {
-            try await CapgoInvocationCompletionCoordinator.shared.registerAwaiting(
-                id: secondId,
-                timeoutSeconds: 2
-            )
+        try CapgoInvocationCompletionCoordinator.shared.armAwaiting(id: secondId, timeoutSeconds: 2)
+        let secondWait = Task {
+            try await CapgoInvocationCompletionCoordinator.shared.awaitCompletion(id: secondId)
         }
-        try await Task.sleep(nanoseconds: 20_000_000)
         CapgoInvocationCompletionCoordinator.shared.complete(
             id: secondId,
             result: ["value": "second"],
             dialog: nil
         )
 
-        let first = try await firstTask.value
-        let second = try await secondTask.value
+        let first = try await firstWait.value
+        let second = try await secondWait.value
         XCTAssertEqual(first.result["value"]?.toAny() as? String, "first")
         XCTAssertEqual(second.result["value"]?.toAny() as? String, "second")
     }

@@ -56,7 +56,10 @@ const outputRoot = path.resolve(process.cwd(), args.output);
 const skillsRoot = path.join(outputRoot, 'Skills');
 
 const config = loadCodegenConfig(configPath);
-const skills = config.skills ?? [];
+if (!Array.isArray(config.skills)) {
+  throw new Error('config.skills must be an array');
+}
+const skills = config.skills;
 
 if (skills.length === 0) {
   throw new Error('config.skills must contain at least one skill entry');
@@ -72,12 +75,17 @@ for (const skill of skills) {
   used.add(skill.name);
   const skillDir = path.join(skillsRoot, skill.name);
   writeSkillMarkdown(skill, path.join(skillDir, 'SKILL.md'));
+  fs.writeFileSync(path.join(skillDir, '.capgo-generated'), '', 'utf8');
   console.log(`Wrote ${path.join(skillDir, 'SKILL.md')}`);
 }
 
 if (fs.existsSync(skillsRoot)) {
   for (const entry of fs.readdirSync(skillsRoot, { withFileTypes: true })) {
-    if (entry.isDirectory() && !used.has(entry.name)) {
+    if (!entry.isDirectory() || used.has(entry.name)) {
+      continue;
+    }
+    const marker = path.join(skillsRoot, entry.name, '.capgo-generated');
+    if (fs.existsSync(marker)) {
       fs.rmSync(path.join(skillsRoot, entry.name), { recursive: true, force: true });
       console.log(`Removed obsolete skill ${entry.name}`);
     }

@@ -1,5 +1,6 @@
 {
   "providerName": "CapgoGeneratedAppShortcuts",
+  "defaultInvocationTimeoutSeconds": 30,
   "shortcuts": [
     {
       "actionName": "orderDish",
@@ -24,6 +25,7 @@
       "tool": true,
       "awaitJavaScriptResult": true,
       "foregroundOnly": true,
+      "execution": "javascript",
       "parameters": [
         {
           "name": "dish",

@@ -11,12 +11,16 @@ const config = path.join(repoRoot, 'app-intents.codegen.example.json');
 
 test('generate-skills-bundle writes SKILL.md with frontmatter', () => {
   const output = path.join(os.tmpdir(), `Skills.skillsbundle-${Date.now()}`);
-  execFileSync(process.execPath, [script, '--config', config, '--output', output], {
-    cwd: repoRoot,
-  });
-  const skillFile = path.join(output, 'Skills', 'order-meal', 'SKILL.md');
-  const markdown = fs.readFileSync(skillFile, 'utf8');
-  assert.match(markdown, /^---\nname: order-meal\ndescription: /);
-  assert.match(markdown, /order dish tool/);
-  fs.rmSync(output, { recursive: true, force: true });
+  try {
+    execFileSync(process.execPath, [script, '--config', config, '--output', output], {
+      cwd: repoRoot,
+    });
+    const skillFile = path.join(output, 'Skills', 'order-meal', 'SKILL.md');
+    const markdown = fs.readFileSync(skillFile, 'utf8');
+    assert.match(markdown, /^---\nname: order-meal\ndescription: /);
+    assert.match(markdown, /order dish tool/);
+    assert.ok(fs.existsSync(path.join(output, 'Skills', 'order-meal', '.capgo-generated')));
+  } finally {
+    fs.rmSync(output, { recursive: true, force: true });
+  }
 });

@@ -16,8 +16,9 @@ public enum CapgoIntentResultSupport {
         options: CapgoIntentPerformOptions
     ) async throws -> some ReturnsValue<String> & ProvidesDialog {
         let outcome = try await CapgoIntentPerformExecutor.perform(options: options)
-        let text = outcome.valueSummary ?? outcome.dialogMessage ?? "Done"
-        return .result(value: text, dialog: IntentDialog(stringLiteral: text))
+        let value = outcome.valueSummary ?? "Done"
+        let dialogText = outcome.dialogMessage ?? value
+        return .result(value: value, dialog: IntentDialog(stringLiteral: dialogText))
     }
 }
 #endif

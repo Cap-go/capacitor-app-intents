@@ -45,7 +45,6 @@ public struct CapgoIntentPerformOutcome {
         if let completion {
             return completion.result["value"]?.toAny() as? String
                 ?? completion.result["summary"]?.toAny() as? String
-                ?? completion.dialog
         }
         if let nativeResult {
             return nativeResult["value"] as? String ?? nativeResult["summary"] as? String
@@ -81,6 +80,7 @@ public enum CapgoIntentPerformExecutor {
         var mergedParams = options.params
         mergedParams["__capgoAwaitingResult"] = options.awaitsJavaScriptResult
         mergedParams["__capgoForegroundOnly"] = options.foregroundOnly
+        mergedParams["__capgoTimeoutSeconds"] = cappedTimeout
 
         guard options.awaitsJavaScriptResult else {
             let record = CapgoAppIntentsBridge.shared.enqueue(
@@ -97,11 +97,13 @@ public enum CapgoIntentPerformExecutor {
         }
 
         let invocationId = UUID().uuidString
-        let completionTask = Task {
-            try await CapgoInvocationCompletionCoordinator.shared.registerAwaiting(
+        do {
+            try CapgoInvocationCompletionCoordinator.shared.armAwaiting(
                 id: invocationId,
                 timeoutSeconds: cappedTimeout
             )
+        } catch {
+            throw error
         }
 
         let record = CapgoAppIntentsBridge.shared.enqueue(
@@ -114,7 +116,7 @@ public enum CapgoIntentPerformExecutor {
         let completion: CapgoInvocationCompletion
         do {
             completion = try await withTaskCancellationHandler {
-                try await completionTask.value
+                try await CapgoInvocationCompletionCoordinator.shared.awaitCompletion(id: invocationId)
             } onCancel: {
                 CapgoInvocationCompletionCoordinator.shared.cancelAwaitingAndRemovePending(id: invocationId)
             }

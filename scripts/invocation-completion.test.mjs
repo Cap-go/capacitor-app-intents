@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import test from 'node:test';
 
 const require = createRequire(import.meta.url);
-const { isAwaitingResult } = require('../dist/plugin.cjs.js');
+const { isAwaitingResult, withInvocationCompletion } = require('../dist/plugin.cjs.js');
 
 test('isAwaitingResult reads awaitingResult and params flag', () => {
   assert.equal(
@@ -37,4 +37,20 @@ test('isAwaitingResult reads awaitingResult and params flag', () => {
     }),
     false,
   );
+});
+
+test('withInvocationCompletion runs handlers that are not awaiting', async () => {
+  let ran = false;
+  const wrapped = withInvocationCompletion(async () => {
+    ran = true;
+  });
+  await wrapped({
+    id: '99',
+    name: 'noop',
+    params: {},
+    source: 'app_intent',
+    createdAt: 0,
+    awaitingResult: false,
+  });
+  assert.equal(ran, true);
 });

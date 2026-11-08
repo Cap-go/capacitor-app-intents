@@ -32,27 +32,57 @@ public final class CapgoInvocationCompletionCoordinator {
     public static let defaultTimeoutSeconds: TimeInterval = 30
     public static let maxTimeoutSeconds: TimeInterval = 600
 
-    private struct AwaitState {
-        let continuation: CheckedContinuation<CapgoInvocationCompletion, Error>
-        let timeoutWorkItem: DispatchWorkItem
+    private enum AwaitSlot {
+        case armed(timeoutWorkItem: DispatchWorkItem)
+        case waiting(
+            continuation: CheckedContinuation<CapgoInvocationCompletion, Error>,
+            timeoutWorkItem: DispatchWorkItem
+        )
+        case settled(Result<CapgoInvocationCompletion, Error>)
     }
 
     private let queue = DispatchQueue(label: "capgo.appintents.invocation.completion")
-    private var awaiting: [String: AwaitState] = [:]
+    private var awaiting: [String: AwaitSlot] = [:]
 
     private init() {}
 
-    public func registerAwaiting(id: String, timeoutSeconds: TimeInterval) async throws -> CapgoInvocationCompletion {
+  public func armAwaiting(id: String, timeoutSeconds: TimeInterval) throws {
         let cappedTimeout = Self.cappedTimeout(timeoutSeconds)
+        try queue.sync {
+            guard awaiting[id] == nil else {
+                throw CapgoInvocationCompletionError.failed(message: "Invocation \(id) is already awaiting completion.")
+            }
+            let workItem = DispatchWorkItem { [weak self] in
+                self?.timeout(id: id)
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + cappedTimeout, execute: workItem)
+            awaiting[id] = .armed(timeoutWorkItem: workItem)
+        }
+    }
+
+    public func awaitCompletion(id: String) async throws -> CapgoInvocationCompletion {
         return try await withCheckedThrowingContinuation { continuation in
             queue.sync {
-                let workItem = DispatchWorkItem { [weak self] in
-                    self?.timeout(id: id)
+                guard let slot = awaiting[id] else {
+                    continuation.resume(throwing: CapgoInvocationCompletionError.notAwaiting(id: id))
+                    return
                 }
-                DispatchQueue.global().asyncAfter(deadline: .now() + cappedTimeout, execute: workItem)
-                self.awaiting[id] = AwaitState(continuation: continuation, timeoutWorkItem: workItem)
+                switch slot {
+                case .settled(let result):
+                    awaiting.removeValue(forKey: id)
+                    continuation.resume(with: result)
+                case .armed(let timeoutWorkItem):
+                    awaiting[id] = .waiting(continuation: continuation, timeoutWorkItem: timeoutWorkItem)
+                case .waiting:
+                    continuation.resume(throwing: CapgoInvocationCompletionError.notAwaiting(id: id))
+                }
             }
         }
+    }
+
+    public func registerAwaiting(id: String, timeoutSeconds: TimeInterval) async throws -> CapgoInvocationCompletion {
+        try armAwaiting(id: id, timeoutSeconds: timeoutSeconds)
+        return try await awaitCompletion(id: id)
     }
 
     private static func cappedTimeout(_ timeoutSeconds: TimeInterval) -> TimeInterval {
@@ -61,57 +91,86 @@ public final class CapgoInvocationCompletionCoordinator {
 
     public func complete(id: String, result: [String: Any], dialog: String?) {
         queue.async {
-            guard let state = self.awaiting.removeValue(forKey: id) else {
+            guard let slot = self.awaiting[id] else {
                 return
             }
-            state.timeoutWorkItem.cancel()
 
             var encoded: [String: CapgoJSONValue] = [:]
             for (key, value) in result {
                 encoded[key] = CapgoJSONValue.fromAny(value)
             }
             let completion = CapgoInvocationCompletion(result: encoded, dialog: dialog)
-            state.continuation.resume(returning: completion)
+            let settled = Result<CapgoInvocationCompletion, Error>.success(completion)
+
+            switch slot {
+            case .waiting(let continuation, let timeoutWorkItem):
+                self.awaiting.removeValue(forKey: id)
+                timeoutWorkItem.cancel()
+                continuation.resume(returning: completion)
+            case .armed(let timeoutWorkItem):
+                timeoutWorkItem.cancel()
+                self.awaiting[id] = .settled(settled)
+            case .settled:
+                break
+            }
         }
     }
 
     public func fail(id: String, message: String) {
         queue.async {
-            guard let state = self.awaiting.removeValue(forKey: id) else {
+            guard let slot = self.awaiting[id] else {
                 return
             }
-            state.timeoutWorkItem.cancel()
-            state.continuation.resume(throwing: CapgoInvocationCompletionError.failed(message: message))
+            let error = CapgoInvocationCompletionError.failed(message: message)
+            let settled = Result<CapgoInvocationCompletion, Error>.failure(error)
+            switch slot {
+            case .waiting(let continuation, let timeoutWorkItem):
+                self.awaiting.removeValue(forKey: id)
+                timeoutWorkItem.cancel()
+                continuation.resume(throwing: error)
+            case .armed(let timeoutWorkItem):
+                timeoutWorkItem.cancel()
+                self.awaiting[id] = .settled(settled)
+            case .settled:
+                break
+            }
         }
     }
 
     public func cancelAwaiting(id: String) {
         queue.async {
-            guard let state = self.awaiting.removeValue(forKey: id) else {
-                return
-            }
-            state.timeoutWorkItem.cancel()
-            state.continuation.resume(throwing: CapgoInvocationCompletionError.notAwaiting(id: id))
+            self.resumeAwaiting(id: id, result: .failure(CapgoInvocationCompletionError.notAwaiting(id: id)))
         }
     }
 
     public func cancelAwaitingAndRemovePending(id: String) {
         queue.async {
-            if let state = self.awaiting.removeValue(forKey: id) {
-                state.timeoutWorkItem.cancel()
-                state.continuation.resume(throwing: CapgoInvocationCompletionError.notAwaiting(id: id))
-            }
+            self.resumeAwaiting(id: id, result: .failure(CapgoInvocationCompletionError.notAwaiting(id: id)))
             CapgoInvocationStore.shared.remove(id: id)
         }
     }
 
     private func timeout(id: String) {
         queue.async {
-            guard let state = self.awaiting.removeValue(forKey: id) else {
-                return
-            }
             CapgoInvocationStore.shared.remove(id: id)
-            state.continuation.resume(throwing: CapgoInvocationCompletionError.timedOut)
+            self.resumeAwaiting(id: id, result: .failure(CapgoInvocationCompletionError.timedOut))
+        }
+    }
+
+    private func resumeAwaiting(id: String, result: Result<CapgoInvocationCompletion, Error>) {
+        guard let slot = awaiting[id] else {
+            return
+        }
+        switch slot {
+        case .waiting(let continuation, let timeoutWorkItem):
+            awaiting.removeValue(forKey: id)
+            timeoutWorkItem.cancel()
+            continuation.resume(with: result)
+        case .armed(let timeoutWorkItem):
+            timeoutWorkItem.cancel()
+            awaiting[id] = .settled(result)
+        case .settled:
+            break
         }
     }
 }

@@ -44,7 +44,8 @@ export interface AppIntentInvocationResult {
   summary?: string;
 
   /**
-   * Arbitrary JSON-safe fields for chained tool intents.
+   * Extra JSON-safe fields for app logic. Only `value`, `message`, and `summary`
+   * surface to Siri on the iOS 17+ awaiting path; other keys are not spoken or chained.
    *
    * @since 8.2.0
    */

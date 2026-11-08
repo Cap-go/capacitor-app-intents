@@ -49,14 +49,29 @@ export function withInvocationCompletion(
 
     try {
       const result = await handler(invocation);
-      if (result) {
-        await completeInvocationWithResult(invocation.id, result);
-      } else {
-        await completeInvocationWithResult(invocation.id, { value: 'Done' });
+      try {
+        if (result) {
+          await completeInvocationWithResult(invocation.id, result);
+        } else {
+          await completeInvocationWithResult(invocation.id, { value: 'Done' });
+        }
+      } catch (completionError) {
+        try {
+          const completionMessage =
+            completionError instanceof Error ? completionError.message : String(completionError);
+          await failInvocationWithError(invocation.id, completionMessage);
+        } catch {
+          // Ignore bridge reporting failures; propagate the completion error.
+        }
+        throw completionError;
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await failInvocationWithError(invocation.id, message);
+      try {
+        await failInvocationWithError(invocation.id, message);
+      } catch {
+        // Ignore bridge reporting failures; preserve the handler error below.
+      }
       throw error;
     }
   };

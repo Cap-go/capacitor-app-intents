@@ -24,7 +24,7 @@ public final class CapgoOnscreenEntityContextStore {
     public func configure(suiteName: String?) {
         lock.lock()
         defer { lock.unlock() }
-        self.suiteName = suiteName
+        CapgoUserDefaultsSuiteSupport.applySuiteName(&self.suiteName, candidate: suiteName)
     }
 
     private var defaults: UserDefaults {

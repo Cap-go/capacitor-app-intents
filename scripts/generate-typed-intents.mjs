@@ -14,6 +14,7 @@ import {
   parameterPropertyBlock,
   parameterSummaryArgs,
   phraseToSwiftLiteral,
+  validateSwiftStructName,
 } from './capgo-intent-codegen-lib.mjs';
 
 function parseArgs(argv) {
@@ -122,6 +123,17 @@ function shortcutIntentReference(shortcut, intentsByName) {
   return `CapgoDispatchAppIntent(actionName: "${action}")`;
 }
 
+function intentByName(config, name) {
+  return (config.intents ?? []).find((intent) => intent.name === name);
+}
+
+function shortcutRequiresIOS17(shortcut, config) {
+  if (shortcut.intent && shortcut.intent !== 'CapgoDispatchAppIntent') {
+    return intentByName(config, shortcut.intent)?.awaitJavaScriptResult === true;
+  }
+  return false;
+}
+
 function generateShortcutsProvider(config) {
   const providerName = config.providerName ?? 'CapgoGeneratedAppShortcuts';
   const blocks = (config.shortcuts ?? [])
@@ -130,7 +142,7 @@ function generateShortcutsProvider(config) {
       const image = escapeSwiftString(shortcut.systemImageName ?? 'bolt');
       const title = escapeSwiftString(shortcut.shortTitle);
       const intentRef = shortcutIntentReference(shortcut, new Map());
-      return `    AppShortcut(
+      const body = `    AppShortcut(
       intent: ${intentRef},
       phrases: [
 ${phrases}
@@ -138,6 +150,10 @@ ${phrases}
       shortTitle: "${title}",
       systemImageName: "${image}"
     )`;
+      if (shortcutRequiresIOS17(shortcut, config)) {
+        return `    if #available(iOS 17.0, *) {\n${body}\n    }`;
+      }
+      return body;
     })
     .join('\n');
 
@@ -176,6 +192,7 @@ fs.mkdirSync(outputDir, { recursive: true });
 
 const expectedFiles = new Set();
 for (const intent of config.intents ?? []) {
+  validateSwiftStructName(intent.name, 'intent.name');
   const file = path.join(outputDir, `${intent.name}.swift`);
   expectedFiles.add(`${intent.name}.swift`);
   fs.writeFileSync(file, generateIntentSwift(intent, config), 'utf8');
