@@ -12,6 +12,7 @@ public final class CapgoAppIntentsBridge {
         CapgoInvocationStore.shared.configure(suiteName: suite)
         CapgoEntityCatalogStore.shared.configure(suiteName: suite)
         CapgoSpotlightMappingStore.shared.configure(suiteName: suite)
+        CapgoOnscreenEntityContextStore.shared.configure(suiteName: suite)
     }
 
     func deliverInvocation(_ record: CapgoInvocationRecord) {

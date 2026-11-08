@@ -12,6 +12,8 @@ Ship Siri phrases, Shortcuts, Spotlight search, Home Screen quick actions, and A
 - **Spotlight**: `indexSpotlightEntities()` uses `CSSearchableItem` on iOS 16+. On iOS 18+ also donates `IndexedEntity` through `indexAppEntities`.
 - **Quick actions**: `setHomeScreenShortcutItems()` maps to `UIApplicationShortcutItem`.
 - **Siri phrases**: compile time literals only. Use the included codegen script (not JavaScript).
+- **Siri chaining (iOS 17+)**: `completeInvocation()` / `failInvocation()` return real tool results to Siri when intents await JavaScript.
+- **App skills (iOS 27.3 preview)**: generate `Skills.skillsbundle` from `SKILL.md` via `generate-skills-bundle.mjs`. See `docs/app-skills.md`.
 - **Platforms**: iOS 16 and later. Android and web reject with a clear error.
 
 ## Compatibility
@@ -48,9 +50,12 @@ import {
   useAppIntentsListener,
 } from '@capgo/capacitor-app-intents';
 
-const handleInvocation = async (invocation) => {
+import { withInvocationCompletion } from '@capgo/capacitor-app-intents';
+
+const handleInvocation = withInvocationCompletion(async (invocation) => {
   console.log(invocation.name, invocation.params);
-};
+  return { value: `Handled ${invocation.name}` };
+});
 
 await useAppIntentsListener(handleInvocation);
 
@@ -82,7 +87,23 @@ On Capacitor 8, forward SceneDelegate quick actions and continued Spotlight acti
 
 4. Rebuild the iOS app. Siri and Shortcuts read the generated `AppShortcutsProvider`.
 
-Custom intents can still call `CapgoAppIntentsBridge.shared.enqueue(...)` from Swift. See `docs/ExampleCustomIntent.swift`.
+### Typed tool intents and app skills
+
+Use `app-intents.codegen.example.json` for typed parameters, results, and `SKILL.md` skills.
+
+```bash
+node node_modules/@capgo/capacitor-app-intents/scripts/generate-typed-intents.mjs \
+  --config app-intents.codegen.json \
+  --output-dir ios/App/App/GeneratedAppIntents
+
+node node_modules/@capgo/capacitor-app-intents/scripts/generate-skills-bundle.mjs \
+  --config app-intents.codegen.json \
+  --output ios/App/App/Skills.skillsbundle
+```
+
+The generic `CapgoDispatchAppIntent(actionName:)` shortcut path remains available. Typed intents call `CapgoIntentPerformExecutor` and can await JavaScript.
+
+Custom intents can still call `CapgoAppIntentsBridge.shared.enqueue(...)` from Swift. See `docs/ExampleCustomIntent.swift`. See `docs/app-skills.md` for Siri AI preview evaluation on a real device.
 
 ## Entity catalog
 
@@ -152,6 +173,9 @@ Copy `example-app/ios-shortcuts/CapgoGeneratedAppShortcuts.swift` into the Xcode
 
 * [`getPendingInvocations()`](#getpendinginvocations)
 * [`removePendingInvocation(...)`](#removependinginvocation)
+* [`completeInvocation(...)`](#completeinvocation)
+* [`failInvocation(...)`](#failinvocation)
+* [`setOnscreenEntityContext(...)`](#setonscreenentitycontext)
 * [`setEntityCatalog(...)`](#setentitycatalog)
 * [`setHomeScreenShortcutItems(...)`](#sethomescreenshortcutitems)
 * [`indexSpotlightEntities(...)`](#indexspotlightentities)
@@ -203,6 +227,57 @@ Remove one pending invocation after your handler processes it.
 | **`options`** | <code>{ id: string; }</code> |
 
 **Since:** 0.1.0
+
+--------------------
+
+
+### completeInvocation(...)
+
+```typescript
+completeInvocation(options: { id: string; result: AppIntentInvocationResult; dialog?: string; }) => Promise<void>
+```
+
+Resolve an invocation that is awaiting a JavaScript result for Siri.
+
+| Param         | Type                                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **`options`** | <code>{ id: string; result: <a href="#appintentinvocationresult">AppIntentInvocationResult</a>; dialog?: string; }</code> |
+
+**Since:** 8.2.0
+
+--------------------
+
+
+### failInvocation(...)
+
+```typescript
+failInvocation(options: { id: string; error: string; }) => Promise<void>
+```
+
+Fail an invocation that is awaiting a JavaScript result.
+
+| Param         | Type                                        |
+| ------------- | ------------------------------------------- |
+| **`options`** | <code>{ id: string; error: string; }</code> |
+
+**Since:** 8.2.0
+
+--------------------
+
+
+### setOnscreenEntityContext(...)
+
+```typescript
+setOnscreenEntityContext(options: { entities: OnscreenEntityReference[]; }) => Promise<void>
+```
+
+Publish optional on-screen entity context for catalog queries.
+
+| Param         | Type                                                  |
+| ------------- | ----------------------------------------------------- |
+| **`options`** | <code>{ entities: OnscreenEntityReference[]; }</code> |
+
+**Since:** 8.2.0
 
 --------------------
 
@@ -355,15 +430,39 @@ Native plugin version string.
 
 #### AppIntentInvocation
 
-A pending App Intent style invocation waiting for JavaScript.
+| Prop                 | Type                                                                            | Description                                                                         | Since |
+| -------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----- |
+| **`id`**             | <code>string</code>                                                             | Stable id for this queued invocation.                                               | 0.1.0 |
+| **`name`**           | <code>string</code>                                                             | Handler name your JavaScript listens for.                                           | 0.1.0 |
+| **`params`**         | <code><a href="#record">Record</a>&lt;string, unknown&gt;</code>                | Parameters passed from Siri, Shortcuts, Spotlight, or quick actions.                | 0.1.0 |
+| **`source`**         | <code><a href="#appintentinvocationsource">AppIntentInvocationSource</a></code> | Origin of the invocation.                                                           | 0.1.0 |
+| **`createdAt`**      | <code>number</code>                                                             | Unix timestamp in milliseconds when the invocation was queued.                      | 0.1.0 |
+| **`awaitingResult`** | <code>boolean</code>                                                            | When true, the native side is waiting for `completeInvocation` or `failInvocation`. | 8.2.0 |
 
-| Prop            | Type                                                                            | Description                                                          | Since |
-| --------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----- |
-| **`id`**        | <code>string</code>                                                             | Stable id for this queued invocation.                                | 0.1.0 |
-| **`name`**      | <code>string</code>                                                             | Handler name your JavaScript listens for.                            | 0.1.0 |
-| **`params`**    | <code><a href="#record">Record</a>&lt;string, unknown&gt;</code>                | Parameters passed from Siri, Shortcuts, Spotlight, or quick actions. | 0.1.0 |
-| **`source`**    | <code><a href="#appintentinvocationsource">AppIntentInvocationSource</a></code> | Origin of the invocation.                                            | 0.1.0 |
-| **`createdAt`** | <code>number</code>                                                             | Unix timestamp in milliseconds when the invocation was queued.       | 0.1.0 |
+
+#### AppIntentInvocationResult
+
+Result payload returned to Siri after JavaScript completes an awaiting invocation.
+
+| Prop          | Type                | Description                                    | Since |
+| ------------- | ------------------- | ---------------------------------------------- | ----- |
+| **`value`**   | <code>string</code> | Primary string Siri can speak or chain on.     | 8.2.0 |
+| **`message`** | <code>string</code> | Optional dialog Siri speaks to the user.       | 8.2.0 |
+| **`summary`** | <code>string</code> | Optional summary used when `value` is omitted. | 8.2.0 |
+
+
+#### OnscreenEntityReference
+
+Optional on-screen entity hint for Siri disambiguation.
+
+This complements native SwiftUI entity annotations. Use it from JavaScript when
+your web UI shows catalog items Siri should prefer.
+
+| Prop              | Type                |
+| ----------------- | ------------------- |
+| **`catalogType`** | <code>string</code> |
+| **`entityId`**    | <code>string</code> |
+| **`title`**       | <code>string</code> |
 
 
 #### EntityCatalogEntry

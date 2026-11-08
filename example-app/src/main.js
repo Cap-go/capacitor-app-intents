@@ -1,8 +1,14 @@
 import './style.css';
 import { Capacitor } from '@capacitor/core';
-import { CapgoAppIntents, useAppIntentsListener } from '@capgo/capacitor-app-intents';
+import {
+  CapgoAppIntents,
+  isAwaitingResult,
+  useAppIntentsListener,
+  withInvocationCompletion,
+} from '@capgo/capacitor-app-intents';
 
 const statusEl = document.getElementById('plugin-status');
+const siriChainEl = document.getElementById('siri-chain-status');
 const logEl = document.getElementById('invocation-log');
 
 const invocations = [];
@@ -39,9 +45,19 @@ function pushInvocation(invocation) {
   renderLog();
 }
 
-async function handleInvocation(invocation) {
+const handleInvocation = withInvocationCompletion(async (invocation) => {
   pushInvocation(invocation);
-}
+  if (!isAwaitingResult(invocation)) {
+    return;
+  }
+
+  if (invocation.name === 'orderDish') {
+    const dish = invocation.params.dishTitle ?? invocation.params.entityTitle ?? 'dish';
+    return { value: `Ordered ${dish}`, message: `Your ${dish} order is in.` };
+  }
+
+  return { value: `Done ${invocation.name}` };
+});
 
 async function init() {
   try {
@@ -57,6 +73,10 @@ async function init() {
     statusEl.className = 'success';
 
     await useAppIntentsListener(handleInvocation);
+    if (siriChainEl) {
+      siriChainEl.textContent =
+        'Tool intents with awaitJavaScriptResult call completeInvocation automatically via withInvocationCompletion.';
+    }
   } catch (error) {
     statusEl.textContent = `Plugin error: ${error.message}`;
     statusEl.className = 'error';
@@ -100,6 +120,19 @@ document.getElementById('index-spotlight')?.addEventListener('click', async () =
 
 document.getElementById('remove-spotlight')?.addEventListener('click', async () => {
   await CapgoAppIntents.removeSpotlightEntities({ ids: ['dish-pasta'] });
+});
+
+document.getElementById('set-onscreen-context')?.addEventListener('click', async () => {
+  await CapgoAppIntents.setOnscreenEntityContext({
+    entities: [{ catalogType: 'dish', entityId: 'pasta', title: 'Pasta' }],
+  });
+  pushInvocation({
+    id: 'debug-onscreen',
+    name: 'debug',
+    source: 'app_intent',
+    createdAt: Date.now(),
+    params: { message: 'On-screen context set for dish pasta' },
+  });
 });
 
 document.getElementById('set-quick-actions')?.addEventListener('click', async () => {

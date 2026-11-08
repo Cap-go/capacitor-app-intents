@@ -8,7 +8,7 @@ import AppIntents
 
 @objc(CapgoAppIntentsPlugin)
 public class CapgoAppIntentsPlugin: CAPPlugin, CAPBridgedPlugin {
-    private let pluginVersion: String = "8.1.0"
+    private let pluginVersion: String = "8.2.0"
     public let identifier = "CapgoAppIntentsPlugin"
     public let jsName = "CapgoAppIntents"
     public let pluginMethods: [CAPPluginMethod] = [
@@ -19,6 +19,9 @@ public class CapgoAppIntentsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "indexSpotlightEntities", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "removeSpotlightEntities", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "performAppleSchemaTemplate", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "completeInvocation", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "failInvocation", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setOnscreenEntityContext", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getPluginVersion", returnType: CAPPluginReturnPromise)
     ]
 
@@ -212,5 +215,43 @@ public class CapgoAppIntentsPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func getPluginVersion(_ call: CAPPluginCall) {
         call.resolve(["version": pluginVersion])
+    }
+
+    @objc func completeInvocation(_ call: CAPPluginCall) {
+        guard let id = call.getString("id") else {
+            call.reject("id is required")
+            return
+        }
+        let resultObject = call.getObject("result") ?? [:]
+        let dialog = call.getString("dialog")
+        CapgoInvocationCompletionCoordinator.shared.complete(id: id, result: resultObject, dialog: dialog)
+        CapgoInvocationStore.shared.remove(id: id)
+        call.resolve()
+    }
+
+    @objc func failInvocation(_ call: CAPPluginCall) {
+        guard let id = call.getString("id") else {
+            call.reject("id is required")
+            return
+        }
+        let message = call.getString("error") ?? call.getString("message") ?? "Invocation failed"
+        CapgoInvocationCompletionCoordinator.shared.fail(id: id, message: message)
+        CapgoInvocationStore.shared.remove(id: id)
+        call.resolve()
+    }
+
+    @objc func setOnscreenEntityContext(_ call: CAPPluginCall) {
+        let rawEntities = call.getArray("entities") ?? []
+        let entities: [CapgoOnscreenEntityReference] = rawEntities.compactMap { value in
+            guard let dict = value as? [String: Any],
+                  let catalogType = dict["catalogType"] as? String,
+                  let entityId = dict["entityId"] as? String else {
+                return nil
+            }
+            let title = dict["title"] as? String
+            return CapgoOnscreenEntityReference(catalogType: catalogType, entityId: entityId, title: title)
+        }
+        CapgoOnscreenEntityContextStore.shared.setEntities(entities)
+        call.resolve()
     }
 }

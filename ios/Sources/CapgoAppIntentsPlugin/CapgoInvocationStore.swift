@@ -15,13 +15,17 @@ public struct CapgoInvocationRecord: Codable, Equatable {
     public let createdAt: TimeInterval
 
     public func toJSObject() -> [String: Any] {
-        return [
+        var object: [String: Any] = [
             "id": id,
             "name": name,
             "params": CapgoJSONValue.encodeObject(params),
             "source": source.rawValue,
             "createdAt": Int(createdAt)
         ]
+        if let awaiting = params["__capgoAwaitingResult"], case .bool(let flag) = awaiting, flag {
+            object["awaitingResult"] = true
+        }
+        return object
     }
 }
 

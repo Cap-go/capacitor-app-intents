@@ -1,6 +1,7 @@
 import type { PluginListenerHandle } from '@capacitor/core';
 
 import type { AppIntentInvocation } from './definitions';
+import { isAwaitingResult } from './invocation-completion';
 import { CapgoAppIntents } from './plugin-instance';
 
 /**
@@ -20,7 +21,9 @@ export async function drainPendingInvocations(
     seen.add(invocation.id);
     try {
       await handler(invocation);
-      await CapgoAppIntents.removePendingInvocation({ id: invocation.id });
+      if (!isAwaitingResult(invocation)) {
+        await CapgoAppIntents.removePendingInvocation({ id: invocation.id });
+      }
     } catch {
       seen.delete(invocation.id);
     }
@@ -49,7 +52,9 @@ export async function useAppIntentsListener(
     seen.add(invocation.id);
     try {
       await handler(invocation);
-      await CapgoAppIntents.removePendingInvocation({ id: invocation.id });
+      if (!isAwaitingResult(invocation)) {
+        await CapgoAppIntents.removePendingInvocation({ id: invocation.id });
+      }
     } catch {
       seen.delete(invocation.id);
     }

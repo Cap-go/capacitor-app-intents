@@ -25,12 +25,20 @@
       </section>
 
       <section class="card">
+        <h2>Siri tool results</h2>
+        <p id="siri-chain-status" class="muted">
+          Awaiting tool intents return a value to Siri via completeInvocation.
+        </p>
+        <button id="set-onscreen-context" type="button">Publish on-screen dish context</button>
+      </section>
+
+      <section class="card">
         <h2>Siri phrases (native codegen)</h2>
         <p>
           App Shortcut phrases are compile time literals. Edit
-          <code>app-shortcuts.config.json</code>, run
-          <code>bun run generate:shortcuts</code>,
-          copy the file into the iOS app target, then rebuild.
+          <code>app-shortcuts.config.json</code> or <code>app-intents.codegen.json</code>, run
+          <code>bun run generate:shortcuts</code> or the typed intent and skills bundle scripts,
+          copy outputs into the iOS app target, then rebuild.
         </p>
       </section>
 

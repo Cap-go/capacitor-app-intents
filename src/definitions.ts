@@ -12,6 +12,55 @@ export type AppIntentInvocationSource = 'app_intent' | 'spotlight' | 'quick_acti
  *
  * @since 0.1.0
  */
+/**
+ * Result payload returned to Siri after JavaScript completes an awaiting invocation.
+ *
+ * @since 8.2.0
+ */
+export interface AppIntentInvocationResult {
+  /**
+   * Primary string Siri can speak or chain on.
+   *
+   * @since 8.2.0
+   */
+  value?: string;
+
+  /**
+   * Optional dialog Siri speaks to the user.
+   *
+   * @since 8.2.0
+   */
+  message?: string;
+
+  /**
+   * Optional summary used when `value` is omitted.
+   *
+   * @since 8.2.0
+   */
+  summary?: string;
+
+  /**
+   * Arbitrary JSON-safe fields for chained tool intents.
+   *
+   * @since 8.2.0
+   */
+  [key: string]: unknown;
+}
+
+/**
+ * Optional on-screen entity hint for Siri disambiguation.
+ *
+ * This complements native SwiftUI entity annotations. Use it from JavaScript when
+ * your web UI shows catalog items Siri should prefer.
+ *
+ * @since 8.2.0
+ */
+export interface OnscreenEntityReference {
+  catalogType: string;
+  entityId: string;
+  title?: string;
+}
+
 export interface AppIntentInvocation {
   /**
    * Stable id for this queued invocation.
@@ -47,6 +96,13 @@ export interface AppIntentInvocation {
    * @since 0.1.0
    */
   createdAt: number;
+
+  /**
+   * When true, the native side is waiting for `completeInvocation` or `failInvocation`.
+   *
+   * @since 8.2.0
+   */
+  awaitingResult?: boolean;
 }
 
 /**
@@ -221,6 +277,27 @@ export interface CapgoAppIntentsPlugin {
    * @since 0.1.0
    */
   removePendingInvocation(options: { id: string }): Promise<void>;
+
+  /**
+   * Resolve an invocation that is awaiting a JavaScript result for Siri.
+   *
+   * @since 8.2.0
+   */
+  completeInvocation(options: { id: string; result: AppIntentInvocationResult; dialog?: string }): Promise<void>;
+
+  /**
+   * Fail an invocation that is awaiting a JavaScript result.
+   *
+   * @since 8.2.0
+   */
+  failInvocation(options: { id: string; error: string }): Promise<void>;
+
+  /**
+   * Publish optional on-screen entity context for catalog queries.
+   *
+   * @since 8.2.0
+   */
+  setOnscreenEntityContext(options: { entities: OnscreenEntityReference[] }): Promise<void>;
 
   /**
    * Persist an entity catalog for a given type string.
