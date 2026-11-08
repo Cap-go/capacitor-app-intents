@@ -76,10 +76,7 @@ public struct CapgoDispatchAppIntent: AppIntent {
         )
 
         if awaitsJavaScriptResult {
-            if #available(iOS 17.0, *) {
-                return try await CapgoIntentResultSupport.performReturningValue(options: options)
-            }
-            return try await CapgoIntentResultSupport.performReturningString(options: options)
+            return try await CapgoIntentResultSupport.performAwaitingWithoutSiriValue(options: options)
         }
 
         return try await CapgoIntentResultSupport.fireAndForget(perform: options)

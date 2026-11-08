@@ -19,7 +19,8 @@ test('generate-typed-intents writes tool intent and shortcuts provider', () => {
   const intentSwift = fs.readFileSync(intentFile, 'utf8');
   const shortcutsSwift = fs.readFileSync(shortcutsFile, 'utf8');
   assert.match(intentSwift, /struct OrderDishToolIntent: AppIntent/);
-  assert.match(intentSwift, /awaitsJavaScriptResult: true/);
+  assert.match(intentSwift, /@available\(iOS 17\.0, \*\)/);
+  assert.match(intentSwift, /ReturnsValue<String>/);
   assert.match(shortcutsSwift, /intent: OrderDishToolIntent\(\)/);
   fs.rmSync(outputDir, { recursive: true, force: true });
 });

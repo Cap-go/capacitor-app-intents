@@ -11,7 +11,7 @@ public enum CapgoIntentResultSupport {
     }
 
     @MainActor
-    public static func performReturningString(
+    public static func performAwaitingWithoutSiriValue(
         options: CapgoIntentPerformOptions
     ) async throws -> some IntentResult {
         _ = try await CapgoIntentPerformExecutor.perform(options: options)
