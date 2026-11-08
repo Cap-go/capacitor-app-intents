@@ -30,6 +30,7 @@ public struct CapgoInvocationCompletion: Equatable {
 public final class CapgoInvocationCompletionCoordinator {
     public static let shared = CapgoInvocationCompletionCoordinator()
     public static let defaultTimeoutSeconds: TimeInterval = 30
+    public static let maxTimeoutSeconds: TimeInterval = 600
 
     private struct AwaitState {
         let continuation: CheckedContinuation<CapgoInvocationCompletion, Error>
@@ -42,16 +43,20 @@ public final class CapgoInvocationCompletionCoordinator {
     private init() {}
 
     public func registerAwaiting(id: String, timeoutSeconds: TimeInterval) async throws -> CapgoInvocationCompletion {
-        try await withCheckedThrowingContinuation { continuation in
-            queue.async {
+        let cappedTimeout = Self.cappedTimeout(timeoutSeconds)
+        return try await withCheckedThrowingContinuation { continuation in
+            queue.sync {
                 let workItem = DispatchWorkItem { [weak self] in
                     self?.timeout(id: id)
                 }
-                DispatchQueue.global().asyncAfter(deadline: .now() + timeoutSeconds, execute: workItem)
-
+                DispatchQueue.global().asyncAfter(deadline: .now() + cappedTimeout, execute: workItem)
                 self.awaiting[id] = AwaitState(continuation: continuation, timeoutWorkItem: workItem)
             }
         }
+    }
+
+    private static func cappedTimeout(_ timeoutSeconds: TimeInterval) -> TimeInterval {
+        return min(max(timeoutSeconds, 1), maxTimeoutSeconds)
     }
 
     public func complete(id: String, result: [String: Any], dialog: String?) {
@@ -95,6 +100,7 @@ public final class CapgoInvocationCompletionCoordinator {
             guard let state = self.awaiting.removeValue(forKey: id) else {
                 return
             }
+            CapgoInvocationStore.shared.remove(id: id)
             state.continuation.resume(throwing: CapgoInvocationCompletionError.timedOut)
         }
     }

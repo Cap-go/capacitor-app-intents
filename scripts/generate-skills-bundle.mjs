@@ -29,12 +29,16 @@ function parseArgs(argv) {
   return args;
 }
 
+function yamlQuotedString(value) {
+  return JSON.stringify(value.trim());
+}
+
 function writeSkillMarkdown(skill, skillFilePath) {
   const body = skill.body ?? '';
   validateSkillName(skill.name);
   validateSkillDescription(skill.description);
   validateSkillBody(body);
-  const content = `---\nname: ${skill.name}\ndescription: ${skill.description.trim()}\n---\n${body.trim() ? `${body.trim()}\n` : ''}`;
+  const content = `---\nname: ${skill.name}\ndescription: ${yamlQuotedString(skill.description)}\n---\n${body.trim() ? `${body.trim()}\n` : ''}`;
   fs.mkdirSync(path.dirname(skillFilePath), { recursive: true });
   fs.writeFileSync(skillFilePath, content, 'utf8');
 }

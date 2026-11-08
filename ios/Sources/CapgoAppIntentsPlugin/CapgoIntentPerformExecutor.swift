@@ -57,9 +57,13 @@ public struct CapgoIntentPerformOutcome {
 public enum CapgoIntentPerformExecutor {
     @MainActor
     public static func perform(options: CapgoIntentPerformOptions) async throws -> CapgoIntentPerformOutcome {
+        let cappedTimeout = min(max(options.timeoutSeconds, 1), CapgoInvocationCompletionCoordinator.maxTimeoutSeconds)
+
         if options.preferNativeHandler,
            let handler = CapgoNativeIntentHandlerRegistry.shared.handler(for: options.actionName) {
-            let result = try await handler(options.params)
+            let result = try await withTimeout(seconds: cappedTimeout) {
+                try await handler(options.params)
+            }
             return CapgoIntentPerformOutcome(
                 record: nil,
                 nativeResult: result,
@@ -72,13 +76,12 @@ public enum CapgoIntentPerformExecutor {
         mergedParams["__capgoAwaitingResult"] = options.awaitsJavaScriptResult
         mergedParams["__capgoForegroundOnly"] = options.foregroundOnly
 
-        let record = CapgoAppIntentsBridge.shared.enqueue(
-            name: options.actionName,
-            params: mergedParams,
-            source: .appIntent
-        )
-
         guard options.awaitsJavaScriptResult else {
+            let record = CapgoAppIntentsBridge.shared.enqueue(
+                name: options.actionName,
+                params: mergedParams,
+                source: .appIntent
+            )
             return CapgoIntentPerformOutcome(
                 record: record,
                 nativeResult: nil,
@@ -87,10 +90,28 @@ public enum CapgoIntentPerformExecutor {
             )
         }
 
-        let completion = try await CapgoInvocationCompletionCoordinator.shared.registerAwaiting(
-            id: record.id,
-            timeoutSeconds: options.timeoutSeconds
+        let invocationId = UUID().uuidString
+        let completionTask = Task {
+            try await CapgoInvocationCompletionCoordinator.shared.registerAwaiting(
+                id: invocationId,
+                timeoutSeconds: cappedTimeout
+            )
+        }
+
+        let record = CapgoAppIntentsBridge.shared.enqueue(
+            name: options.actionName,
+            params: mergedParams,
+            source: .appIntent,
+            id: invocationId
         )
+
+        let completion: CapgoInvocationCompletion
+        do {
+            completion = try await completionTask.value
+        } catch {
+            CapgoInvocationStore.shared.remove(id: invocationId)
+            throw error
+        }
         CapgoInvocationStore.shared.remove(id: record.id)
 
         return CapgoIntentPerformOutcome(
@@ -99,5 +120,25 @@ public enum CapgoIntentPerformExecutor {
             completion: completion,
             usedNativeHandler: false
         )
+    }
+
+    private static func withTimeout<T>(
+        seconds: TimeInterval,
+        operation: @escaping () async throws -> T
+    ) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw CapgoInvocationCompletionError.timedOut
+            }
+            guard let value = try await group.next() else {
+                throw CapgoInvocationCompletionError.timedOut
+            }
+            group.cancelAll()
+            return value
+        }
     }
 }

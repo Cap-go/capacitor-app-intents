@@ -122,7 +122,8 @@ public final class CapgoInvocationStore {
     public func enqueue(
         name: String,
         params: [String: Any],
-        source: CapgoInvocationSource
+        source: CapgoInvocationSource,
+        id: String? = nil
     ) -> CapgoInvocationRecord {
         queue.sync {
             var encodedParams: [String: CapgoJSONValue] = [:]
@@ -131,7 +132,7 @@ public final class CapgoInvocationStore {
             }
 
             let record = CapgoInvocationRecord(
-                id: UUID().uuidString,
+                id: id ?? UUID().uuidString,
                 name: name,
                 params: encodedParams,
                 source: source,
