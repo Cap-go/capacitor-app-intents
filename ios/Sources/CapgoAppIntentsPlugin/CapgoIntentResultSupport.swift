@@ -5,15 +5,7 @@ import Foundation
 @available(iOS 16.0, *)
 public enum CapgoIntentResultSupport {
     @MainActor
-    public static func fireAndForget(perform options: CapgoIntentPerformOptions) async throws -> some IntentResult {
-        _ = try await CapgoIntentPerformExecutor.perform(options: options)
-        return .result()
-    }
-
-    @MainActor
-    public static func performAwaitingWithoutSiriValue(
-        options: CapgoIntentPerformOptions
-    ) async throws -> some IntentResult {
+    public static func perform(options: CapgoIntentPerformOptions) async throws -> some IntentResult {
         _ = try await CapgoIntentPerformExecutor.perform(options: options)
         return .result()
     }

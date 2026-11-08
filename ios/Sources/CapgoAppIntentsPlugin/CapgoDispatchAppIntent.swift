@@ -75,11 +75,7 @@ public struct CapgoDispatchAppIntent: AppIntent {
             timeoutSeconds: TimeInterval(max(1, timeoutSeconds))
         )
 
-        if awaitsJavaScriptResult {
-            return try await CapgoIntentResultSupport.performAwaitingWithoutSiriValue(options: options)
-        }
-
-        return try await CapgoIntentResultSupport.fireAndForget(perform: options)
+        return try await CapgoIntentResultSupport.perform(options: options)
     }
 }
 #endif
