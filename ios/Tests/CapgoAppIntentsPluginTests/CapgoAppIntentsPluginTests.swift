@@ -123,39 +123,45 @@ final class CapgoAppIntentsPluginTests: XCTestCase {
             let query = CapgoCatalogEntityQuery()
             let suggested = try await query.suggestedEntities()
             XCTAssertEqual(suggested.first?.entityId, "2")
+            XCTAssertEqual(suggested.count, 2)
         }
         #endif
     }
 
-    func testChainedAwaitingCompletions() async {
+    func testChainedAwaitingCompletions() async throws {
         let firstId = UUID().uuidString
         let secondId = UUID().uuidString
 
-        Task {
-            try? await Task.sleep(nanoseconds: 20_000_000)
-            CapgoInvocationCompletionCoordinator.shared.complete(
+        let firstTask = Task {
+            try await CapgoInvocationCompletionCoordinator.shared.registerAwaiting(
                 id: firstId,
-                result: ["value": "first"],
-                dialog: nil
-            )
-            try? await Task.sleep(nanoseconds: 20_000_000)
-            CapgoInvocationCompletionCoordinator.shared.complete(
-                id: secondId,
-                result: ["value": "second"],
-                dialog: nil
+                timeoutSeconds: 2
             )
         }
-
-        let first = try? await CapgoInvocationCompletionCoordinator.shared.registerAwaiting(
+        try await Task.sleep(nanoseconds: 20_000_000)
+        CapgoInvocationCompletionCoordinator.shared.complete(
             id: firstId,
-            timeoutSeconds: 2
+            result: ["value": "first"],
+            dialog: nil
         )
-        let second = try? await CapgoInvocationCompletionCoordinator.shared.registerAwaiting(
+
+        let secondTask = Task {
+            try await CapgoInvocationCompletionCoordinator.shared.registerAwaiting(
+                id: secondId,
+                timeoutSeconds: 2
+            )
+        }
+        try await Task.sleep(nanoseconds: 20_000_000)
+        CapgoInvocationCompletionCoordinator.shared.complete(
             id: secondId,
-            timeoutSeconds: 2
+            result: ["value": "second"],
+            dialog: nil
         )
-        XCTAssertEqual(first?.result["value"]?.toAny() as? String, "first")
-        XCTAssertEqual(second?.result["value"]?.toAny() as? String, "second")
+
+        let first = try await firstTask.value
+        let second = try await secondTask.value
+        XCTAssertEqual(first.result["value"]?.toAny() as? String, "first")
+        XCTAssertEqual(second.result["value"]?.toAny() as? String, "second")
     }
 
     func testInvocationRecordAwaitingFlag() {

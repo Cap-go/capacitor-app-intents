@@ -17,16 +17,22 @@ public final class CapgoOnscreenEntityContextStore {
 
     private let storageKey = "capgo_app_intents_onscreen_entities_v1"
     private var suiteName: String?
+    private let lock = NSLock()
 
     private init() {}
 
     public func configure(suiteName: String?) {
+        lock.lock()
+        defer { lock.unlock() }
         self.suiteName = suiteName
     }
 
     private var defaults: UserDefaults {
-        if let suiteName, let suite = UserDefaults(suiteName: suiteName) {
-            return suite
+        lock.lock()
+        let suite = suiteName
+        lock.unlock()
+        if let suite, let userDefaults = UserDefaults(suiteName: suite) {
+            return userDefaults
         }
         return .standard
     }

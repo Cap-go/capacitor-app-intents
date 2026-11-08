@@ -95,6 +95,16 @@ public final class CapgoInvocationCompletionCoordinator {
         }
     }
 
+    public func cancelAwaitingAndRemovePending(id: String) {
+        queue.async {
+            if let state = self.awaiting.removeValue(forKey: id) {
+                state.timeoutWorkItem.cancel()
+                state.continuation.resume(throwing: CapgoInvocationCompletionError.notAwaiting(id: id))
+            }
+            CapgoInvocationStore.shared.remove(id: id)
+        }
+    }
+
     private func timeout(id: String) {
         queue.async {
             guard let state = self.awaiting.removeValue(forKey: id) else {

@@ -51,6 +51,8 @@ export function withInvocationCompletion(
       const result = await handler(invocation);
       if (result) {
         await completeInvocationWithResult(invocation.id, result);
+      } else {
+        await completeInvocationWithResult(invocation.id, { value: 'Done' });
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

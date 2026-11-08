@@ -1,12 +1,9 @@
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import test from 'node:test';
 
-function isAwaitingResult(invocation) {
-  if (invocation.awaitingResult === true) {
-    return true;
-  }
-  return invocation.params['__capgoAwaitingResult'] === true;
-}
+const require = createRequire(import.meta.url);
+const { isAwaitingResult } = require('../dist/plugin.cjs.js');
 
 test('isAwaitingResult reads awaitingResult and params flag', () => {
   assert.equal(

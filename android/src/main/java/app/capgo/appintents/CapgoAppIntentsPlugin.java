@@ -68,6 +68,11 @@ public class CapgoAppIntentsPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void clearOnscreenEntityContext(PluginCall call) {
+        rejectUnimplemented(call);
+    }
+
+    @PluginMethod
     public void getPluginVersion(PluginCall call) {
         JSObject ret = new JSObject();
         ret.put("version", pluginVersion);

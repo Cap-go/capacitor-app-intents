@@ -61,30 +61,32 @@ public struct CapgoCatalogEntityQuery: EntityQuery {
     }
 
     public func suggestedEntities() async throws -> [CapgoCatalogEntity] {
+        CapgoAppIntentsBootstrap.ensureConfigured()
         let onscreen = CapgoOnscreenEntityContextStore.shared.entities()
-        if !onscreen.isEmpty {
-            var prioritized: [CapgoCatalogEntity] = []
-            for reference in onscreen {
-                if let entry = CapgoEntityCatalogStore.shared.entry(
-                    catalogType: reference.catalogType,
-                    entityId: reference.entityId
-                ) {
-                    prioritized.append(
-                        CapgoCatalogEntity(
-                            catalogType: reference.catalogType,
-                            entityId: entry.id,
-                            title: entry.title,
-                            subtitle: entry.subtitle,
-                            metadata: entry.metadata
-                        )
+        var prioritized: [CapgoCatalogEntity] = []
+        for reference in onscreen {
+            if let entry = CapgoEntityCatalogStore.shared.entry(
+                catalogType: reference.catalogType,
+                entityId: reference.entityId
+            ) {
+                prioritized.append(
+                    CapgoCatalogEntity(
+                        catalogType: reference.catalogType,
+                        entityId: entry.id,
+                        title: entry.title,
+                        subtitle: entry.subtitle,
+                        metadata: entry.metadata
                     )
-                }
-            }
-            if !prioritized.isEmpty {
-                return prioritized
+                )
             }
         }
-        return try await allCatalogEntities()
+        let all = try await allCatalogEntities()
+        guard !prioritized.isEmpty else {
+            return all
+        }
+        let prioritizedIds = Set(prioritized.map(\.id))
+        let remainder = all.filter { !prioritizedIds.contains($0.id) }
+        return prioritized + remainder
     }
 
     public func entities(matching string: String) async throws -> [CapgoCatalogEntity] {

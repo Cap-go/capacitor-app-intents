@@ -38,14 +38,14 @@ function toolMacroLine(intent) {
   return '\n// Promote to a Siri tool on iOS 27.3+ by adding @AppIntent(.tool) when your SDK supports ToolIntent.\n';
 }
 
-function generateIntentSwift(intent) {
+function generateIntentSwift(intent, config) {
   const parameters = intent.parameters ?? [];
   const title = escapeSwiftString(intent.title);
   const description = escapeSwiftString(intent.description ?? intent.title);
   const systemImage = escapeSwiftString(intent.systemImageName ?? 'bolt');
   const awaits = intent.awaitJavaScriptResult === true;
   const foregroundOnly = intent.foregroundOnly !== false;
-  const timeout = intent.timeoutSeconds ?? 30;
+  const timeout = intent.timeoutSeconds ?? config.defaultInvocationTimeoutSeconds ?? 30;
   const execution = intent.execution === 'native' ? 'native' : 'javascript';
   const preferNative = execution === 'native';
 
@@ -126,18 +126,18 @@ function generateShortcutsProvider(config) {
   const providerName = config.providerName ?? 'CapgoGeneratedAppShortcuts';
   const blocks = (config.shortcuts ?? [])
     .map((shortcut) => {
-      const phrases = shortcut.phrases.map((p) => `          ${phraseToSwiftLiteral(p)},`).join('\n');
+      const phrases = shortcut.phrases.map((p) => `        ${phraseToSwiftLiteral(p)},`).join('\n');
       const image = escapeSwiftString(shortcut.systemImageName ?? 'bolt');
       const title = escapeSwiftString(shortcut.shortTitle);
       const intentRef = shortcutIntentReference(shortcut, new Map());
-      return `      AppShortcut(
-        intent: ${intentRef},
-        phrases: [
+      return `    AppShortcut(
+      intent: ${intentRef},
+      phrases: [
 ${phrases}
-        ],
-        shortTitle: "${title}",
-        systemImageName: "${image}"
-      ),`;
+      ],
+      shortTitle: "${title}",
+      systemImageName: "${image}"
+    )`;
     })
     .join('\n');
 
@@ -148,10 +148,9 @@ import CapgoCapacitorAppIntents
 
 @available(iOS 16.0, *)
 struct ${providerName}: AppShortcutsProvider {
+  @AppShortcutsBuilder
   static var appShortcuts: [AppShortcut] {
-    [
 ${blocks}
-    ]
   }
 }
 #endif
@@ -175,14 +174,27 @@ const outputDir = path.resolve(
 const config = loadCodegenConfig(configPath);
 fs.mkdirSync(outputDir, { recursive: true });
 
+const expectedFiles = new Set();
 for (const intent of config.intents ?? []) {
   const file = path.join(outputDir, `${intent.name}.swift`);
-  fs.writeFileSync(file, generateIntentSwift(intent), 'utf8');
+  expectedFiles.add(`${intent.name}.swift`);
+  fs.writeFileSync(file, generateIntentSwift(intent, config), 'utf8');
   console.log(`Wrote ${file}`);
 }
 
 if (Array.isArray(config.shortcuts) && config.shortcuts.length > 0) {
-  const shortcutsFile = path.join(outputDir, `${config.providerName ?? 'CapgoGeneratedAppShortcuts'}.swift`);
+  const providerFile = `${config.providerName ?? 'CapgoGeneratedAppShortcuts'}.swift`;
+  expectedFiles.add(providerFile);
+  const shortcutsFile = path.join(outputDir, providerFile);
   fs.writeFileSync(shortcutsFile, generateShortcutsProvider(config), 'utf8');
   console.log(`Wrote ${shortcutsFile}`);
+}
+
+if (fs.existsSync(outputDir)) {
+  for (const entry of fs.readdirSync(outputDir)) {
+    if (entry.endsWith('.swift') && !expectedFiles.has(entry)) {
+      fs.unlinkSync(path.join(outputDir, entry));
+      console.log(`Removed obsolete ${entry}`);
+    }
+  }
 }

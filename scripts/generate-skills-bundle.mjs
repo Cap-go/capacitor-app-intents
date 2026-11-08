@@ -75,5 +75,14 @@ for (const skill of skills) {
   console.log(`Wrote ${path.join(skillDir, 'SKILL.md')}`);
 }
 
+if (fs.existsSync(skillsRoot)) {
+  for (const entry of fs.readdirSync(skillsRoot, { withFileTypes: true })) {
+    if (entry.isDirectory() && !used.has(entry.name)) {
+      fs.rmSync(path.join(skillsRoot, entry.name), { recursive: true, force: true });
+      console.log(`Removed obsolete skill ${entry.name}`);
+    }
+  }
+}
+
 console.log(`Validated ${skills.length} skill(s) under ${outputRoot}`);
 console.log('Add Skills.skillsbundle to your iOS app target Copy Bundle Resources build phase.');

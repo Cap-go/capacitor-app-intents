@@ -15,6 +15,10 @@ export type AppIntentInvocationSource = 'app_intent' | 'spotlight' | 'quick_acti
 /**
  * Result payload returned to Siri after JavaScript completes an awaiting invocation.
  *
+ * Typed codegen intents on iOS 17+ surface `value` and optional `message`/`summary` as a
+ * `ReturnsValue<String>` string to Siri. The generic `CapgoDispatchAppIntent` path still
+ * completes JavaScript but does not return that string to Siri on iOS 16.
+ *
  * @since 8.2.0
  */
 export interface AppIntentInvocationResult {
@@ -298,6 +302,13 @@ export interface CapgoAppIntentsPlugin {
    * @since 8.2.0
    */
   setOnscreenEntityContext(options: { entities: OnscreenEntityReference[] }): Promise<void>;
+
+  /**
+   * Clear on-screen entity hints when your UI no longer shows those rows.
+   *
+   * @since 8.2.0
+   */
+  clearOnscreenEntityContext(): Promise<void>;
 
   /**
    * Persist an entity catalog for a given type string.

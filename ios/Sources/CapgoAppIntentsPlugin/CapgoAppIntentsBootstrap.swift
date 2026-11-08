@@ -15,6 +15,7 @@ enum CapgoAppIntentsBootstrap {
         CapgoAppIntentsBridge.shared.configure(appGroupId: appGroupId)
         CapgoQuickActionsManager.shared.configure(suiteName: appGroupId)
         CapgoSpotlightMappingStore.shared.configure(suiteName: appGroupId)
+        CapgoOnscreenEntityContextStore.shared.configure(suiteName: appGroupId)
 
         didConfigure = true
     }

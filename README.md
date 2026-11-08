@@ -176,6 +176,7 @@ Copy `example-app/ios-shortcuts/CapgoGeneratedAppShortcuts.swift` into the Xcode
 * [`completeInvocation(...)`](#completeinvocation)
 * [`failInvocation(...)`](#failinvocation)
 * [`setOnscreenEntityContext(...)`](#setonscreenentitycontext)
+* [`clearOnscreenEntityContext()`](#clearonscreenentitycontext)
 * [`setEntityCatalog(...)`](#setentitycatalog)
 * [`setHomeScreenShortcutItems(...)`](#sethomescreenshortcutitems)
 * [`indexSpotlightEntities(...)`](#indexspotlightentities)
@@ -276,6 +277,19 @@ Publish optional on-screen entity context for catalog queries.
 | Param         | Type                                                  |
 | ------------- | ----------------------------------------------------- |
 | **`options`** | <code>{ entities: OnscreenEntityReference[]; }</code> |
+
+**Since:** 8.2.0
+
+--------------------
+
+
+### clearOnscreenEntityContext()
+
+```typescript
+clearOnscreenEntityContext() => Promise<void>
+```
+
+Clear on-screen entity hints when your UI no longer shows those rows.
 
 **Since:** 8.2.0
 
@@ -443,6 +457,10 @@ Native plugin version string.
 #### AppIntentInvocationResult
 
 Result payload returned to Siri after JavaScript completes an awaiting invocation.
+
+Typed codegen intents on iOS 17+ surface `value` and optional `message`/`summary` as a
+`ReturnsValue&lt;String&gt;` string to Siri. The generic `CapgoDispatchAppIntent` path still
+completes JavaScript but does not return that string to Siri on iOS 16.
 
 | Prop          | Type                | Description                                    | Since |
 | ------------- | ------------------- | ---------------------------------------------- | ----- |

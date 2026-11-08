@@ -2,11 +2,15 @@
 import fs from 'node:fs';
 
 export function escapeSwiftString(value) {
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n');
 }
 
 export function phraseToSwiftLiteral(phrase) {
-  const escaped = phrase.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const escaped = escapeSwiftString(phrase);
   const withAppName = escaped.replace(/\{\{applicationName\}\}/g, '\\(.applicationName)');
   return `"${withAppName}"`;
 }
@@ -129,7 +133,9 @@ export function parameterPropertyBlock(parameters) {
           ? `, default: ${parameter.default}`
           : parameter.type === 'bool' && parameter.default !== undefined
             ? `, default: ${parameter.default}`
-            : '';
+            : parameter.type === 'string' && parameter.default !== undefined
+              ? `, default: "${escapeSwiftString(String(parameter.default))}"`
+              : '';
       return `    @Parameter(title: "${title}"${defaultClause})\n    public var ${parameter.name}: ${swiftType}${optional}`;
     })
     .join('\n\n');
@@ -139,23 +145,27 @@ export function parameterSummaryArgs(parameters) {
   if (!parameters.length) {
     return '';
   }
-  return parameters
-    .map((parameter) => {
-      if (parameter.type === 'entity') {
-        return `\\(.\\$${parameter.name}.title)`;
-      }
-      return `\\(.\\$${parameter.name})`;
-    })
-    .join(', ');
+  return parameters.map((parameter) => `\\(.\\$${parameter.name})`).join(', ');
 }
 
 export function collectParamsFromParameters(parameters) {
   const lines = [];
   for (const parameter of parameters) {
     if (parameter.type === 'entity') {
-      lines.push(`        params["${parameter.name}CatalogType"] = ${parameter.name}.catalogType`);
-      lines.push(`        params["${parameter.name}EntityId"] = ${parameter.name}.entityId`);
-      lines.push(`        params["${parameter.name}Title"] = ${parameter.name}.title`);
+      const prefix = parameter.optional
+        ? `        if let ${parameter.name} {`
+        : '';
+      const suffix = parameter.optional ? '        }' : '';
+      const inner = [
+        `            params["${parameter.name}CatalogType"] = ${parameter.name}.catalogType`,
+        `            params["${parameter.name}EntityId"] = ${parameter.name}.entityId`,
+        `            params["${parameter.name}Title"] = ${parameter.name}.title`,
+      ].join('\n');
+      if (parameter.optional) {
+        lines.push(prefix, inner, suffix);
+      } else {
+        lines.push(inner);
+      }
       continue;
     }
     lines.push(`        params["${parameter.name}"] = ${parameter.name}`);

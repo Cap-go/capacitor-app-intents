@@ -14,10 +14,10 @@ public enum CapgoIntentResultSupport {
     @MainActor
     public static func performReturningValue(
         options: CapgoIntentPerformOptions
-    ) async throws -> some ReturnsValue<String> {
+    ) async throws -> some ReturnsValue<String> & ProvidesDialog {
         let outcome = try await CapgoIntentPerformExecutor.perform(options: options)
         let text = outcome.valueSummary ?? outcome.dialogMessage ?? "Done"
-        return .result(value: text)
+        return .result(value: text, dialog: IntentDialog(stringLiteral: text))
     }
 }
 #endif

@@ -22,6 +22,7 @@ public class CapgoAppIntentsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "completeInvocation", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "failInvocation", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setOnscreenEntityContext", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "clearOnscreenEntityContext", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getPluginVersion", returnType: CAPPluginReturnPromise)
     ]
 
@@ -252,6 +253,11 @@ public class CapgoAppIntentsPlugin: CAPPlugin, CAPBridgedPlugin {
             return CapgoOnscreenEntityReference(catalogType: catalogType, entityId: entityId, title: title)
         }
         CapgoOnscreenEntityContextStore.shared.setEntities(entities)
+        call.resolve()
+    }
+
+    @objc func clearOnscreenEntityContext(_ call: CAPPluginCall) {
+        CapgoOnscreenEntityContextStore.shared.clear()
         call.resolve()
     }
 }

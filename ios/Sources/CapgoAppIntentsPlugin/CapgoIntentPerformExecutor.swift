@@ -59,6 +59,12 @@ public enum CapgoIntentPerformExecutor {
     public static func perform(options: CapgoIntentPerformOptions) async throws -> CapgoIntentPerformOutcome {
         let cappedTimeout = min(max(options.timeoutSeconds, 1), CapgoInvocationCompletionCoordinator.maxTimeoutSeconds)
 
+        if #available(iOS 16.0, *),
+           options.foregroundOnly,
+           !CapgoIntentForegroundGuard.isForegroundReady(foregroundOnly: options.foregroundOnly) {
+            throw CapgoInvocationCompletionError.failed(message: "App must be in the foreground for this action.")
+        }
+
         if options.preferNativeHandler,
            let handler = CapgoNativeIntentHandlerRegistry.shared.handler(for: options.actionName) {
             let result = try await withTimeout(seconds: cappedTimeout) {
@@ -107,7 +113,11 @@ public enum CapgoIntentPerformExecutor {
 
         let completion: CapgoInvocationCompletion
         do {
-            completion = try await completionTask.value
+            completion = try await withTaskCancellationHandler {
+                try await completionTask.value
+            } onCancel: {
+                CapgoInvocationCompletionCoordinator.shared.cancelAwaitingAndRemovePending(id: invocationId)
+            }
         } catch {
             CapgoInvocationStore.shared.remove(id: invocationId)
             throw error

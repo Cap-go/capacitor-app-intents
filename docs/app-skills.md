@@ -67,7 +67,7 @@ await CapgoAppIntents.setOnscreenEntityContext({
 });
 ```
 
-`CapgoCatalogEntityQuery` prioritizes these entities in `suggestedEntities()`. Native SwiftUI `appEntityIdentifier` annotations remain the full onscreen awareness path when you embed native views.
+`CapgoCatalogEntityQuery` prioritizes these entities in `suggestedEntities()` and still returns the rest of the catalog. Call `clearOnscreenEntityContext()` when the UI hides those rows. Native SwiftUI `appEntityIdentifier` annotations remain the full onscreen awareness path when you embed native views.
 
 ## Real device Siri evaluation
 
