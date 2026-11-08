@@ -6,7 +6,11 @@ import Foundation
 public enum CapgoIntentResultSupport {
     @MainActor
     public static func perform(options: CapgoIntentPerformOptions) async throws -> some IntentResult {
-        _ = try await CapgoIntentPerformExecutor.perform(options: options)
+        let outcome = try await CapgoIntentPerformExecutor.perform(options: options)
+        if options.awaitsJavaScriptResult {
+            let spoken = outcome.dialogMessage ?? outcome.valueSummary ?? "Done"
+            return .result(dialog: IntentDialog(stringLiteral: spoken))
+        }
         return .result()
     }
 
@@ -20,5 +24,6 @@ public enum CapgoIntentResultSupport {
         let dialogText = outcome.dialogMessage ?? value
         return .result(value: value, dialog: IntentDialog(stringLiteral: dialogText))
     }
+
 }
 #endif

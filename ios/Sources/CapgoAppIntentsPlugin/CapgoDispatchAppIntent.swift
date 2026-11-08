@@ -75,9 +75,6 @@ public struct CapgoDispatchAppIntent: AppIntent {
             timeoutSeconds: TimeInterval(max(1, timeoutSeconds))
         )
 
-        if #available(iOS 17.0, *), awaitsJavaScriptResult {
-            return try await CapgoIntentResultSupport.performReturningValue(options: options)
-        }
         return try await CapgoIntentResultSupport.perform(options: options)
     }
 }
