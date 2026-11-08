@@ -4,6 +4,92 @@ Ship Siri phrases, Shortcuts, Spotlight search, Home Screen quick actions, and A
 
 <a href="https://capgo.app/?ref=plugin_app_intents"><img src="https://capgo.app/readme-banner.svg?repo=Cap-go/capacitor-app-intents" alt="Capgo" /></a>
 
+## Siri app skills for Capacitor (iOS 27.3 Developer Preview)
+
+Apple's [app skills](https://developer.apple.com/documentation/appintents/orchestrating-complex-actions-with-app-skills/) preview lets Siri run multi-step workflows in your app. `@capgo/capacitor-app-intents` connects that stack to the Capacitor JavaScript layer you already ship:
+
+- **App skills in `Skills.skillsbundle`**: describe how Siri should orchestrate your tools (generated from config as `SKILL.md`).
+- **Typed tool intents**: build-time codegen with parameters, entities, and string results instead of a single generic dispatch intent.
+- **Real results back to Siri**: when `awaitJavaScriptResult` is enabled, `completeInvocation()` / `withInvocationCompletion()` suspends the native `perform()` until JavaScript returns a value Siri can speak and chain into the next step (iOS 17+ string results; see `docs/app-skills.md`).
+
+**Honest SDK guards:** `@AppIntent(.tool)` / `ToolIntent` need the **iOS 27.3 SDK (Xcode 27.3 beta)**. This package does not declare those APIs so CI keeps building on current Xcode. Generated Swift includes a comment; you add the tool trait in app-owned files when your SDK is ready. App skills validation on a real device needs **iOS 27.3 beta** and Apple Intelligence (not Simulator). The generic `CapgoDispatchAppIntent` path remains for **iOS 16+** apps that do not adopt skills yet.
+
+### Minimal setup (config, skill, JavaScript)
+
+`app-intents.codegen.json` (excerpt):
+
+```json
+{
+  "intents": [
+    {
+      "name": "OrderDishToolIntent",
+      "actionName": "orderDish",
+      "title": "Order dish",
+      "tool": true,
+      "awaitJavaScriptResult": true,
+      "execution": "javascript",
+      "parameters": [
+        { "name": "dish", "type": "entity", "entityType": "CapgoCatalogEntity" }
+      ],
+      "result": { "type": "string", "title": "Order summary" }
+    }
+  ],
+  "skills": [
+    {
+      "name": "order-meal",
+      "description": "Guides Siri through choosing a dish and placing an order.",
+      "body": "Use the order dish tool after the person picks an item. Confirm the summary before finishing."
+    }
+  ]
+}
+```
+
+Generate native artifacts and add them to your **iOS app target** (not the plugin package):
+
+```bash
+node node_modules/@capgo/capacitor-app-intents/scripts/generate-typed-intents.mjs \
+  --config app-intents.codegen.json \
+  --output-dir ios/App/App/GeneratedAppIntents
+
+node node_modules/@capgo/capacitor-app-intents/scripts/generate-skills-bundle.mjs \
+  --config app-intents.codegen.json \
+  --output ios/App/App/Skills.skillsbundle
+```
+
+`generate-skills-bundle.mjs` writes `Skills/order-meal/SKILL.md` like:
+
+```markdown
+---
+name: order-meal
+description: "Guides Siri through choosing a dish and placing an order."
+---
+Use the order dish tool after the person picks an item. Confirm the summary before finishing.
+```
+
+Return a tool result from JavaScript:
+
+```ts
+import { useAppIntentsListener, withInvocationCompletion } from '@capgo/capacitor-app-intents';
+
+await useAppIntentsListener(
+  withInvocationCompletion(async (invocation) => {
+    if (invocation.name === 'orderDish') {
+      return { value: 'Ordered pasta', message: 'Your pasta order is in.' };
+    }
+  }),
+);
+```
+
+Handlers can also call `completeInvocation({ id, result, dialog })` directly when you manage the listener yourself.
+
+### Why Capgo
+
+- **Capacitor-first**: same TypeScript handlers you use for Shortcuts, Spotlight, and the pending queue now power Siri tool results.
+- **Backward compatible**: keep `CapgoDispatchAppIntent` for existing shortcuts; adopt typed intents and skills when you are ready.
+- **Live handler updates**: business logic in your web bundle can ship through [Capgo live updates](https://capgo.app/) without an App Store submission for every tweak. Siri phrases, shortcut literals, generated Swift, and `Skills.skillsbundle` still require an iOS rebuild when you change them.
+
+Full steps: `docs/app-skills.md`.
+
 ## Key features
 
 - **JavaScript dispatch bridge**: `CapgoDispatchAppIntent` plus `CapgoAppIntentsBridge` for custom Swift intents.
