@@ -4,6 +4,18 @@ Ship Siri phrases, Shortcuts, Spotlight search, Home Screen quick actions, and A
 
 <a href="https://capgo.app/?ref=plugin_app_intents"><img src="https://capgo.app/readme-banner.svg?repo=Cap-go/capacitor-app-intents" alt="Capgo" /></a>
 
+## Built and maintained with AI
+
+We build, improve and fix our plugins with heavy use of AI, so issues usually get fixed in under a day and pull requests get feedback the same day. A human still reviews and merges 50+ pull requests daily.
+
+- Most plugin issues get a fix pull request the same day, often within a couple of hours, and are usually resolved in one to two days.
+- Every pull request goes through our AI review system, usually within minutes.
+- Our AI pre-checks tests, code review, conventions and security, then a human validates and merges.
+- A human, Martin, reviews and merges 50+ pull requests every day.
+- In the last 90 days, 95% of plugin issues were resolved.
+
+[Learn more about how we build with AI](https://capgo.app/docs/plugins/ai-engineering/)
+
 ## Key features
 
 - **JavaScript dispatch bridge**: `CapgoDispatchAppIntent` plus `CapgoAppIntentsBridge` for custom Swift intents.
