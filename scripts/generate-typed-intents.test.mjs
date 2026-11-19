@@ -25,9 +25,9 @@ test('generate-typed-intents writes tool intent and shortcuts provider', () => {
     assert.match(intentSwift, /Summary \{\s*\\\.\$dish/s);
     assert.match(shortcutsSwift, /@available\(iOS 16\.0, \*\)/);
     assert.match(shortcutsSwift, /@AppShortcutsBuilder/);
-    assert.match(shortcutsSwift, /intent: OrderDishToolIntent\(\)/);
     assert.match(shortcutsSwift, /intent: CapgoDispatchAppIntent/);
-    assert.match(shortcutsSwift, /capgoShortcutsForCurrentOS/);
+    assert.match(shortcutsSwift, /one AppShortcutsProvider per app/);
+    assert.doesNotMatch(shortcutsSwift, /intent: OrderDishToolIntent\(\)/);
   } finally {
     fs.rmSync(outputDir, { recursive: true, force: true });
   }

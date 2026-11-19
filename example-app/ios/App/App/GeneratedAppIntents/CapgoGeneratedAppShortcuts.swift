@@ -3,15 +3,13 @@
 import AppIntents
 import CapgoCapacitorAppIntents
 
+// Tool Siri phrases for Order dish require iOS 17+.
+// Apple allows one AppShortcutsProvider per app, and Xcode 26 rejects if #available inside @AppShortcutsBuilder.
+// Typed tool intents are still generated as AppIntent types for iOS 17 Shortcuts/Siri discovery.
 @available(iOS 16.0, *)
 struct CapgoGeneratedAppShortcuts: AppShortcutsProvider {
   @AppShortcutsBuilder
   static var appShortcuts: [AppShortcut] {
-    capgoShortcutsForCurrentOS()
-  }
-
-  @AppShortcutsBuilder
-  private static func capgoShortcutsForCurrentOS() -> [AppShortcut] {
     AppShortcut(
       intent: CapgoDispatchAppIntent(actionName: "openMenu"),
       phrases: [
@@ -20,16 +18,6 @@ struct CapgoGeneratedAppShortcuts: AppShortcutsProvider {
       shortTitle: "Open menu",
       systemImageName: "list.bullet"
     )
-    if #available(iOS 17.0, *) {
-      AppShortcut(
-      intent: OrderDishToolIntent(),
-      phrases: [
-      "Order a dish in \(.applicationName)",
-      ],
-      shortTitle: "Order dish",
-      systemImageName: "fork.knife"
-      )
-    }
   }
 }
 #endif

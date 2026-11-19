@@ -166,23 +166,13 @@ function generateShortcutsProvider(config) {
   const hasMixedAvailability = ios16Shortcuts.length > 0 && ios17Shortcuts.length > 0;
 
   const builderBody = hasMixedAvailability
-    ? `    capgoShortcutsForCurrentOS()`
+    ? ios16Blocks
     : allBlocks || '    // no shortcuts';
 
-  const ios17BlocksInAvailability = ios17Blocks
-    .split('\n')
-    .map((line) => (line.length ? `      ${line.trimStart()}` : line))
-    .join('\n');
-
-  const mixedHelper = hasMixedAvailability
-    ? `
-  @AppShortcutsBuilder
-  private static func capgoShortcutsForCurrentOS() -> [AppShortcut] {
-${ios16Blocks}
-    if #available(iOS 17.0, *) {
-${ios17BlocksInAvailability}
-    }
-  }
+  const mixedNote = hasMixedAvailability
+    ? `// Tool Siri phrases for ${ios17Shortcuts.map((s) => s.shortTitle).join(', ')} require iOS 17+.
+// Apple allows one AppShortcutsProvider per app, and Xcode 26 rejects if #available inside @AppShortcutsBuilder.
+// Typed tool intents are still generated as AppIntent types for iOS 17 Shortcuts/Siri discovery.
 `
     : '';
 
@@ -198,13 +188,13 @@ ${ios17BlocksInAvailability}
 import AppIntents
 import ${pluginModule}
 
-${providerAvailability}
+${mixedNote}${providerAvailability}
 struct ${providerName}: AppShortcutsProvider {
   @AppShortcutsBuilder
   static var appShortcuts: [AppShortcut] {
 ${builderBody}
   }
-${hasMixedAvailability ? mixedHelper : ''}}
+}
 #endif
 `;
 }
