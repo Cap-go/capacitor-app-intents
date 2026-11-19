@@ -17,7 +17,7 @@ public struct OrderDishToolIntent: AppIntent {
     public init() {}
 
     public static var parameterSummary: some ParameterSummary {
-        Summary("Order dish \(.\.$dish)")
+        Summary("Order dish \(\.\$dish)")
     }
 
     @MainActor

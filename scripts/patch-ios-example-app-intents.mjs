@@ -194,6 +194,11 @@ function pluginPackageRelativePath(exampleAppRoot) {
   return path.relative(appProjectDir, absolute).split(path.sep).join('/');
 }
 
+function listBlockIncludesName(pbx, blockName, productName) {
+  const match = pbx.match(new RegExp(`${blockName} = \\(([\\s\\S]*?)\\n\\t+\\);`));
+  return Boolean(match && match[1].includes(productName));
+}
+
 function addCapgoPluginPackageToAppTarget(pbx, pluginRelativePath) {
   if (!pluginRelativePath) {
     return pbx;
@@ -202,52 +207,64 @@ function addCapgoPluginPackageToAppTarget(pbx, pluginRelativePath) {
   const existingRefMatch = pbx.match(
     /\t\t([A-F0-9]+) \/\* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" \*\/ = \{\n\t\t\tisa = XCLocalSwiftPackageReference;\n\t\t\trelativePath = "[^"]*";\n\t\t\};/,
   );
-  if (existingRefMatch) {
-    return pbx.replace(
-      existingRefMatch[0],
-      `\t\t${existingRefMatch[1]} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */ = {\n\t\t\tisa = XCLocalSwiftPackageReference;\n\t\t\trelativePath = ${JSON.stringify(pluginRelativePath)};\n\t\t};`,
+  const packageRefId = existingRefMatch ? existingRefMatch[1] : uuid();
+
+  if (!listBlockIncludesName(pbx, 'packageReferences', 'CapgoCapacitorAppIntents')) {
+    pbx = pbx.replace(
+      /(packageReferences = \(\n\t+)(D4C12C0A2AAA248700AAC8A2 \/\* XCLocalSwiftPackageReference "CapApp-SPM" \*\/,)/,
+      `$1$2\n\t\t\t\t${packageRefId} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */,`,
     );
   }
 
-  const packageRefId = uuid();
-  const productDepId = uuid();
-  const frameworkBuildId = uuid();
-
-  pbx = pbx.replace(
-    '/* End XCLocalSwiftPackageReference section */',
-    `\t\t${packageRefId} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */ = {\n\t\t\tisa = XCLocalSwiftPackageReference;\n\t\t\trelativePath = ${JSON.stringify(pluginRelativePath)};\n\t\t};\n/* End XCLocalSwiftPackageReference section */`,
+  const existingProductMatch = pbx.match(
+    /\t\t([A-F0-9]+) \/\* CapgoCapacitorAppIntents \*\/ = \{\n\t\t\tisa = XCSwiftPackageProductDependency;\n\t\t\tpackage = [^;]+;\n\t\t\tproductName = CapgoCapacitorAppIntents;\n\t\t\};/,
   );
+  const productDepId = existingProductMatch ? existingProductMatch[1] : uuid();
 
-  pbx = pbx.replace(
-    /packageReferences = \(\n\t\t\tD4C12C0A2AAA248700AAC8A2 \/\* XCLocalSwiftPackageReference "CapApp-SPM" \*\/,/,
-    `packageReferences = (\n\t\t\tD4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,\n\t\t\t${packageRefId} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */,`,
-  );
-
-  pbx = pbx.replace(
-    '/* End XCSwiftPackageProductDependency section */',
-    `\t\t${productDepId} /* CapgoCapacitorAppIntents */ = {\n\t\t\tisa = XCSwiftPackageProductDependency;\n\t\t\tpackage = ${packageRefId} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */;\n\t\t\tproductName = CapgoCapacitorAppIntents;\n\t\t};\n/* End XCSwiftPackageProductDependency section */`,
-  );
-
-  pbx = pbx.replace(
-    /packageProductDependencies = \(\n\t\t\t4D22ABE82AF431CB00220026 \/\* CapApp-SPM \*\/,/,
-    `packageProductDependencies = (\n\t\t\t4D22ABE82AF431CB00220026 /* CapApp-SPM */,\n\t\t\t${productDepId} /* CapgoCapacitorAppIntents */,`,
-  );
-
-  pbx = pbx.replace(
-    '/* End PBXBuildFile section */',
-    `\t\t${frameworkBuildId} /* CapgoCapacitorAppIntents in Frameworks */ = {isa = PBXBuildFile; productRef = ${productDepId} /* CapgoCapacitorAppIntents */; };\n/* End PBXBuildFile section */`,
-  );
-
-  const frameworksMatch = pbx.match(
-    /(\t\t504EC3011FED79650016851F \/\* Frameworks \*\/ = \{[\s\S]*?files = \(\n)([\s\S]*?)(\n\t\t\t\);\n\t\t\trunOnlyForDeploymentPostprocessing)/,
-  );
-  if (!frameworksMatch) {
-    throw new Error('Could not find Frameworks build phase');
+  if (!listBlockIncludesName(pbx, 'packageProductDependencies', 'CapgoCapacitorAppIntents')) {
+    pbx = pbx.replace(
+      /(packageProductDependencies = \(\n\t+)(4D22ABE82AF431CB00220026 \/\* CapApp-SPM \*\/,)/,
+      `$1$2\n\t\t\t\t${productDepId} /* CapgoCapacitorAppIntents */,`,
+    );
   }
-  pbx = pbx.replace(
-    frameworksMatch[0],
-    `${frameworksMatch[1]}${frameworksMatch[2].trimEnd()}\n\t\t\t\t${frameworkBuildId} /* CapgoCapacitorAppIntents in Frameworks */,\n${frameworksMatch[3]}`,
-  );
+
+  if (existingRefMatch) {
+    pbx = pbx.replace(
+      existingRefMatch[0],
+      `\t\t${packageRefId} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */ = {\n\t\t\tisa = XCLocalSwiftPackageReference;\n\t\t\trelativePath = ${JSON.stringify(pluginRelativePath)};\n\t\t};`,
+    );
+  } else {
+    pbx = pbx.replace(
+      '/* End XCLocalSwiftPackageReference section */',
+      `\t\t${packageRefId} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */ = {\n\t\t\tisa = XCLocalSwiftPackageReference;\n\t\t\trelativePath = ${JSON.stringify(pluginRelativePath)};\n\t\t};\n/* End XCLocalSwiftPackageReference section */`,
+    );
+  }
+
+  if (!existingProductMatch) {
+    pbx = pbx.replace(
+      '/* End XCSwiftPackageProductDependency section */',
+      `\t\t${productDepId} /* CapgoCapacitorAppIntents */ = {\n\t\t\tisa = XCSwiftPackageProductDependency;\n\t\t\tpackage = ${packageRefId} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */;\n\t\t\tproductName = CapgoCapacitorAppIntents;\n\t\t};\n/* End XCSwiftPackageProductDependency section */`,
+    );
+  }
+
+  if (!pbx.includes('CapgoCapacitorAppIntents in Frameworks')) {
+    const frameworkBuildId = uuid();
+    pbx = pbx.replace(
+      '/* End PBXBuildFile section */',
+      `\t\t${frameworkBuildId} /* CapgoCapacitorAppIntents in Frameworks */ = {isa = PBXBuildFile; productRef = ${productDepId} /* CapgoCapacitorAppIntents */; };\n/* End PBXBuildFile section */`,
+    );
+
+    const frameworksMatch = pbx.match(
+      /(\t\t504EC3011FED79650016851F \/\* Frameworks \*\/ = \{[\s\S]*?files = \(\n)([\s\S]*?)(\n\t\t\t\);\n\t\t\trunOnlyForDeploymentPostprocessing)/,
+    );
+    if (!frameworksMatch) {
+      throw new Error('Could not find Frameworks build phase');
+    }
+    pbx = pbx.replace(
+      frameworksMatch[0],
+      `${frameworksMatch[1]}${frameworksMatch[2].trimEnd()}\n\t\t\t\t${frameworkBuildId} /* CapgoCapacitorAppIntents in Frameworks */,\n${frameworksMatch[3]}`,
+    );
+  }
 
   return pbx;
 }
