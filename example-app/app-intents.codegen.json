@@ -1,5 +1,4 @@
 {
-  "swiftPluginModule": "CapApp_SPM",
   "providerName": "CapgoGeneratedAppShortcuts",
   "defaultInvocationTimeoutSeconds": 30,
   "shortcuts": [

@@ -179,17 +179,77 @@ function addSkillsBundleResource(pbx) {
   return pbx;
 }
 
-function ensureCapAppSpmReexportsPlugin(exampleAppRoot) {
-  const capAppSwift = path.join(exampleAppRoot, 'ios/App/CapApp-SPM/Sources/CapApp-SPM/CapApp-SPM.swift');
-  if (!fs.existsSync(capAppSwift)) {
-    return;
+function pluginPackageRelativePath(exampleAppRoot) {
+  const packageSwiftPath = path.join(exampleAppRoot, 'ios/App/CapApp-SPM/Package.swift');
+  if (!fs.existsSync(packageSwiftPath)) {
+    return null;
   }
-  let source = fs.readFileSync(capAppSwift, 'utf8');
-  if (!source.includes('@_exported import CapgoCapacitorAppIntents')) {
-    source = `@_exported import CapgoCapacitorAppIntents\n\n${source.trimStart()}`;
-    fs.writeFileSync(capAppSwift, source, 'utf8');
-    console.log(`Patched ${capAppSwift} with @_exported import CapgoCapacitorAppIntents`);
+  const pkg = fs.readFileSync(packageSwiftPath, 'utf8');
+  const match = pkg.match(/name:\s*"CapgoCapacitorAppIntents",\s*path:\s*"([^"]+)"/);
+  if (!match) {
+    return null;
   }
+  const absolute = path.resolve(path.join(exampleAppRoot, 'ios/App/CapApp-SPM', match[1]));
+  const appProjectDir = path.join(exampleAppRoot, 'ios/App');
+  return path.relative(appProjectDir, absolute).split(path.sep).join('/');
+}
+
+function addCapgoPluginPackageToAppTarget(pbx, pluginRelativePath) {
+  if (!pluginRelativePath) {
+    return pbx;
+  }
+
+  const existingRefMatch = pbx.match(
+    /\t\t([A-F0-9]+) \/\* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" \*\/ = \{\n\t\t\tisa = XCLocalSwiftPackageReference;\n\t\t\trelativePath = "[^"]*";\n\t\t\};/,
+  );
+  if (existingRefMatch) {
+    return pbx.replace(
+      existingRefMatch[0],
+      `\t\t${existingRefMatch[1]} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */ = {\n\t\t\tisa = XCLocalSwiftPackageReference;\n\t\t\trelativePath = ${JSON.stringify(pluginRelativePath)};\n\t\t};`,
+    );
+  }
+
+  const packageRefId = uuid();
+  const productDepId = uuid();
+  const frameworkBuildId = uuid();
+
+  pbx = pbx.replace(
+    '/* End XCLocalSwiftPackageReference section */',
+    `\t\t${packageRefId} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */ = {\n\t\t\tisa = XCLocalSwiftPackageReference;\n\t\t\trelativePath = ${JSON.stringify(pluginRelativePath)};\n\t\t};\n/* End XCLocalSwiftPackageReference section */`,
+  );
+
+  pbx = pbx.replace(
+    /packageReferences = \(\n\t\t\tD4C12C0A2AAA248700AAC8A2 \/\* XCLocalSwiftPackageReference "CapApp-SPM" \*\/,/,
+    `packageReferences = (\n\t\t\tD4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,\n\t\t\t${packageRefId} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */,`,
+  );
+
+  pbx = pbx.replace(
+    '/* End XCSwiftPackageProductDependency section */',
+    `\t\t${productDepId} /* CapgoCapacitorAppIntents */ = {\n\t\t\tisa = XCSwiftPackageProductDependency;\n\t\t\tpackage = ${packageRefId} /* XCLocalSwiftPackageReference "CapgoCapacitorAppIntents" */;\n\t\t\tproductName = CapgoCapacitorAppIntents;\n\t\t};\n/* End XCSwiftPackageProductDependency section */`,
+  );
+
+  pbx = pbx.replace(
+    /packageProductDependencies = \(\n\t\t\t4D22ABE82AF431CB00220026 \/\* CapApp-SPM \*\/,/,
+    `packageProductDependencies = (\n\t\t\t4D22ABE82AF431CB00220026 /* CapApp-SPM */,\n\t\t\t${productDepId} /* CapgoCapacitorAppIntents */,`,
+  );
+
+  pbx = pbx.replace(
+    '/* End PBXBuildFile section */',
+    `\t\t${frameworkBuildId} /* CapgoCapacitorAppIntents in Frameworks */ = {isa = PBXBuildFile; productRef = ${productDepId} /* CapgoCapacitorAppIntents */; };\n/* End PBXBuildFile section */`,
+  );
+
+  const frameworksMatch = pbx.match(
+    /(\t\t504EC3011FED79650016851F \/\* Frameworks \*\/ = \{[\s\S]*?files = \(\n)([\s\S]*?)(\n\t\t\t\);\n\t\t\trunOnlyForDeploymentPostprocessing)/,
+  );
+  if (!frameworksMatch) {
+    throw new Error('Could not find Frameworks build phase');
+  }
+  pbx = pbx.replace(
+    frameworksMatch[0],
+    `${frameworksMatch[1]}${frameworksMatch[2].trimEnd()}\n\t\t\t\t${frameworkBuildId} /* CapgoCapacitorAppIntents in Frameworks */,\n${frameworksMatch[3]}`,
+  );
+
+  return pbx;
 }
 
 function patchExampleAppIntents(exampleAppRoot) {
@@ -202,11 +262,12 @@ function patchExampleAppIntents(exampleAppRoot) {
     process.exit(1);
   }
 
-  ensureCapAppSpmReexportsPlugin(exampleAppRoot);
-
   let pbx = fs.readFileSync(pbxPath, 'utf8');
   patchDeploymentTarget16(pbxPath, packageSwiftPath);
   pbx = fs.readFileSync(pbxPath, 'utf8');
+
+  const pluginRelativePath = pluginPackageRelativePath(exampleAppRoot);
+  pbx = addCapgoPluginPackageToAppTarget(pbx, pluginRelativePath);
 
   const groupResult = addGeneratedAppIntentsGroup(pbx);
   pbx = groupResult.pbx;
