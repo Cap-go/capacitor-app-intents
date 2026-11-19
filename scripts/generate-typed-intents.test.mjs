@@ -45,6 +45,7 @@ test('generate-typed-intents writes tool intent and shortcuts provider (mixed co
     assert.match(intentSwift, /Summary \{\s*\\\.\$dish/s);
     assert.match(shortcutsSwift, /@available\(iOS 16\.0, \*\)/);
     assert.match(shortcutsSwift, /#warning\("Capgo codegen omitted App Shortcut Siri phrases for: Order dish/);
+    assert.match(shortcutsSwift, /minimumIOSVersion to 17/);
     assert.match(shortcutsSwift, /@AppShortcutsBuilder/);
     assert.match(shortcutsSwift, /intent: CapgoDispatchAppIntent/);
     assert.match(shortcutsSwift, /one AppShortcutsProvider per app/);
@@ -113,6 +114,28 @@ test('AppShortcutsProvider is iOS 16 when every shortcut is dispatch', () => {
     assert.match(swift, /intent: CapgoDispatchAppIntent/);
     assert.doesNotMatch(swift, /#warning/);
     assert.equal(describeMixedShortcutOmissions(loaded), null);
+    const outputDir = path.join(dir, 'out');
+    const { stderr } = runCodegen(file, outputDir);
+    assert.doesNotMatch(stderr, /omitting App Shortcut Siri phrases/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('mixed config with minimumIOSVersion 17 emits iOS 17 provider with all shortcuts', () => {
+  const base = loadCodegenConfig(config);
+  const { file, dir } = writeTempConfig('mixed-ios17-min.json', {
+    ...base,
+    minimumIOSVersion: 17,
+  });
+  try {
+    const loaded = loadCodegenConfig(file);
+    const swift = generateShortcutsProviderSwift(loaded);
+    assert.equal(describeMixedShortcutOmissions(loaded), null);
+    assert.match(swift, /@available\(iOS 17\.0, \*\)/);
+    assert.match(swift, /intent: OrderDishToolIntent\(\)/);
+    assert.match(swift, /intent: CapgoDispatchAppIntent/);
+    assert.doesNotMatch(swift, /#warning/);
     const outputDir = path.join(dir, 'out');
     const { stderr } = runCodegen(file, outputDir);
     assert.doesNotMatch(stderr, /omitting App Shortcut Siri phrases/);

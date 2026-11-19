@@ -6,8 +6,8 @@ import CapgoCapacitorAppIntents
 // Tool Siri phrases for Order dish are omitted from this AppShortcutsProvider (iOS 17+ typed shortcuts in a mixed config).
 // Apple allows one AppShortcutsProvider per app, and Xcode 26 rejects if #available inside @AppShortcutsBuilder.
 // Typed tool intents are still generated as AppIntent types for iOS 17 Shortcuts/Siri discovery.
-// Raise deployment target to iOS 17.0 to emit all shortcuts, or use a CapgoDispatchAppIntent shortcut for the phrase.
-#warning("Capgo codegen omitted App Shortcut Siri phrases for: Order dish. See @capgo/capacitor-app-intents README (mixed iOS 16/17 codegen).")
+// Set "minimumIOSVersion": 17 in app-intents.codegen.json to emit all shortcuts on one @available(iOS 17.0, *) provider, or add a CapgoDispatchAppIntent shortcut for the phrase.
+#warning("Capgo codegen omitted App Shortcut Siri phrases for: Order dish. Set minimumIOSVersion to 17 in app-intents.codegen.json or see @capgo/capacitor-app-intents README.")
 @available(iOS 16.0, *)
 struct CapgoGeneratedAppShortcuts: AppShortcutsProvider {
   @AppShortcutsBuilder

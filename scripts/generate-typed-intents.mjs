@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
+  codegenMinimumIOSVersion,
   collectParamsFromParameters,
   escapeSwiftString,
   loadCodegenConfig,
@@ -164,24 +165,30 @@ function generateShortcutsProvider(config) {
   const ios17Blocks = ios17Shortcuts.map(appShortcutBlock).join('\n');
   const allBlocks = shortcuts.map(appShortcutBlock).join('\n');
 
-  const hasMixedAvailability = ios16Shortcuts.length > 0 && ios17Shortcuts.length > 0;
+  const minimumIOS = codegenMinimumIOSVersion(config);
+  const emitIos17Provider = minimumIOS >= 17;
+  const hasMixedAvailability =
+    !emitIos17Provider && ios16Shortcuts.length > 0 && ios17Shortcuts.length > 0;
 
-  const builderBody = hasMixedAvailability
-    ? ios16Blocks
-    : allBlocks || '    // no shortcuts';
+  const builderBody = emitIos17Provider
+    ? allBlocks || '    // no shortcuts'
+    : hasMixedAvailability
+      ? ios16Blocks
+      : allBlocks || '    // no shortcuts';
 
   const omittedTitles = ios17Shortcuts.map((s) => s.shortTitle);
   const mixedNote = hasMixedAvailability
     ? `// Tool Siri phrases for ${omittedTitles.join(', ')} are omitted from this AppShortcutsProvider (iOS 17+ typed shortcuts in a mixed config).
 // Apple allows one AppShortcutsProvider per app, and Xcode 26 rejects if #available inside @AppShortcutsBuilder.
 // Typed tool intents are still generated as AppIntent types for iOS 17 Shortcuts/Siri discovery.
-// Raise deployment target to iOS 17.0 to emit all shortcuts, or use a CapgoDispatchAppIntent shortcut for the phrase.
-#warning("Capgo codegen omitted App Shortcut Siri phrases for: ${omittedTitles.join(', ')}. See @capgo/capacitor-app-intents README (mixed iOS 16/17 codegen).")
+// Set "minimumIOSVersion": 17 in app-intents.codegen.json to emit all shortcuts on one @available(iOS 17.0, *) provider, or add a CapgoDispatchAppIntent shortcut for the phrase.
+#warning("Capgo codegen omitted App Shortcut Siri phrases for: ${omittedTitles.join(', ')}. Set minimumIOSVersion to 17 in app-intents.codegen.json or see @capgo/capacitor-app-intents README.")
 `
     : '';
 
-  const providerAvailability =
-    ios16Shortcuts.length > 0
+  const providerAvailability = emitIos17Provider
+    ? '@available(iOS 17.0, *)'
+    : ios16Shortcuts.length > 0
       ? '@available(iOS 16.0, *)'
       : ios17Shortcuts.length > 0
         ? '@available(iOS 17.0, *)'
@@ -204,6 +211,9 @@ ${builderBody}
 }
 
 export function describeMixedShortcutOmissions(config) {
+  if (codegenMinimumIOSVersion(config) >= 17) {
+    return null;
+  }
   const shortcuts = config.shortcuts ?? [];
   const ios17Shortcuts = shortcuts.filter((shortcut) => shortcutRequiresIOS17(shortcut, config));
   const ios16Shortcuts = shortcuts.filter((shortcut) => !shortcutRequiresIOS17(shortcut, config));
@@ -217,7 +227,7 @@ export function describeMixedShortcutOmissions(config) {
       `Capgo codegen: omitting App Shortcut Siri phrases for [${titles}] ` +
       '(iOS 17 typed intents in a mixed config with iOS 16 dispatch shortcuts). ' +
       'Apple allows one AppShortcutsProvider; Xcode 26 rejects #available inside @AppShortcutsBuilder. ' +
-      'Raise iOS deployment target to 17.0 to register all phrases, or use a CapgoDispatchAppIntent shortcut for the phrase. ' +
+      'Set minimumIOSVersion to 17 in app-intents.codegen.json to register all phrases, or use a CapgoDispatchAppIntent shortcut for the phrase. ' +
       'See @capgo/capacitor-app-intents README.',
   };
 }
