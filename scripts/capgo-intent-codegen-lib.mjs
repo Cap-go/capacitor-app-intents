@@ -186,7 +186,7 @@ export function parameterSummaryArgs(parameters) {
   if (!parameters.length) {
     return '';
   }
-  return parameters.map((parameter) => `\\(.\\$${parameter.name})`).join(', ');
+  return parameters.map((parameter) => `\\(.\\.$${parameter.name})`).join(', ');
 }
 
 function catalogEntityParamLines(parameter) {

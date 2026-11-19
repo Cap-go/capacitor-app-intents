@@ -179,6 +179,19 @@ function addSkillsBundleResource(pbx) {
   return pbx;
 }
 
+function ensureCapAppSpmReexportsPlugin(exampleAppRoot) {
+  const capAppSwift = path.join(exampleAppRoot, 'ios/App/CapApp-SPM/Sources/CapApp-SPM/CapApp-SPM.swift');
+  if (!fs.existsSync(capAppSwift)) {
+    return;
+  }
+  let source = fs.readFileSync(capAppSwift, 'utf8');
+  if (!source.includes('@_exported import CapgoCapacitorAppIntents')) {
+    source = `@_exported import CapgoCapacitorAppIntents\n\n${source.trimStart()}`;
+    fs.writeFileSync(capAppSwift, source, 'utf8');
+    console.log(`Patched ${capAppSwift} with @_exported import CapgoCapacitorAppIntents`);
+  }
+}
+
 function patchExampleAppIntents(exampleAppRoot) {
   const pbxPath = path.join(exampleAppRoot, 'ios/App/App.xcodeproj/project.pbxproj');
   const packageSwiftPath = path.join(exampleAppRoot, 'ios/App/CapApp-SPM/Package.swift');
@@ -188,6 +201,8 @@ function patchExampleAppIntents(exampleAppRoot) {
     console.error(`Missing ${pbxPath}. Run "bunx cap add ios" in example-app first.`);
     process.exit(1);
   }
+
+  ensureCapAppSpmReexportsPlugin(exampleAppRoot);
 
   let pbx = fs.readFileSync(pbxPath, 'utf8');
   patchDeploymentTarget16(pbxPath, packageSwiftPath);
