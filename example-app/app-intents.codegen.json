@@ -1,0 +1,47 @@
+{
+  "providerName": "CapgoGeneratedAppShortcuts",
+  "defaultInvocationTimeoutSeconds": 30,
+  "shortcuts": [
+    {
+      "actionName": "orderDish",
+      "shortTitle": "Order dish",
+      "systemImageName": "fork.knife",
+      "phrases": ["Order a dish in {{applicationName}}"],
+      "intent": "OrderDishToolIntent"
+    },
+    {
+      "actionName": "openMenu",
+      "shortTitle": "Open menu",
+      "systemImageName": "list.bullet",
+      "phrases": ["Open the menu in {{applicationName}}"]
+    }
+  ],
+  "intents": [
+    {
+      "name": "OrderDishToolIntent",
+      "actionName": "orderDish",
+      "title": "Order dish",
+      "description": "Orders a dish from the menu.",
+      "tool": true,
+      "awaitJavaScriptResult": true,
+      "foregroundOnly": true,
+      "execution": "javascript",
+      "parameters": [
+        {
+          "name": "dish",
+          "title": "Dish",
+          "type": "entity",
+          "entityType": "CapgoCatalogEntity"
+        }
+      ],
+      "result": { "type": "string", "title": "Order summary" }
+    }
+  ],
+  "skills": [
+    {
+      "name": "order-meal",
+      "description": "Guides Siri through choosing a dish and placing an order in the example app.",
+      "body": "Use the order dish tool after the person picks an item."
+    }
+  ]
+}

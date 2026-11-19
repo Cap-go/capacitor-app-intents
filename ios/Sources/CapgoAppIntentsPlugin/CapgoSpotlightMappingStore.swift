@@ -17,7 +17,7 @@ public final class CapgoSpotlightMappingStore {
     private init() {}
 
     public func configure(suiteName: String?) {
-        self.suiteName = suiteName
+        CapgoUserDefaultsSuiteSupport.applySuiteName(&self.suiteName, candidate: suiteName)
     }
 
     private var defaults: UserDefaults {

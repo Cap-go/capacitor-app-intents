@@ -9,9 +9,14 @@
   ],
   "scripts": {
     "start": "vite",
+    "prebuild": "node scripts/example-prebuild.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "generate:shortcuts": "node ../scripts/generate-app-shortcuts.mjs --config app-shortcuts.config.json --output ios-shortcuts/CapgoGeneratedAppShortcuts.swift"
+    "generate:ios-app-intents": "node ../scripts/prepare-example-ios.mjs .",
+    "generate:shortcuts": "node ../scripts/generate-app-shortcuts.mjs --config app-shortcuts.config.json --output ios-shortcuts/CapgoGeneratedAppShortcuts.swift",
+    "generate:typed-intents": "node ../scripts/generate-typed-intents.mjs --config app-intents.codegen.json --output-dir ios-shortcuts/GeneratedAppIntents",
+    "generate:skills-bundle": "node ../scripts/generate-skills-bundle.mjs --config app-intents.codegen.json --output ios-shortcuts/Skills.skillsbundle",
+    "sync:ios": "bunx cap sync ios && node ../scripts/patch-ios-example-app-intents.mjs ."
   },
   "dependencies": {
     "@capacitor/core": "^8.5.2",

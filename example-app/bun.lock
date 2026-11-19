@@ -9,8 +9,7 @@
         "@capacitor/core": "^8.5.2",
         "@capacitor/ios": "^8.5.2",
         "@capacitor/splash-screen": "^8.0.0",
-        "@capgo/capacitor-share-target": "file:..",
-        "@capgo/capacitor-updater": "^8.45.11",
+        "@capgo/capacitor-app-intents": "file:..",
       },
       "devDependencies": {
         "@capacitor/cli": "^8.5.2",
@@ -40,9 +39,7 @@
 
     "@capacitor/splash-screen": ["@capacitor/splash-screen@8.0.2", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-0C6rYScr13WfAE9nPl4ScOQynmjFv9NT3Th+RZkD4ezYHmER6mcl1/lDYsv7jg3Rj3FOvLrlTlmNkUrr83kZzQ=="],
 
-    "@capgo/capacitor-share-target": ["@capgo/capacitor-share-target@file:..", { "devDependencies": { "@capacitor/android": "^8.0.0", "@capacitor/cli": "^8.0.0", "@capacitor/core": "^8.0.0", "@capacitor/docgen": "^0.3.1", "@capacitor/ios": "^8.0.0", "@ionic/eslint-config": "^0.5.0", "@ionic/prettier-config": "^4.0.0", "@ionic/swiftlint-config": "^2.0.0", "@types/node": "^26.0.0", "@typescript-eslint/eslint-plugin": "^8.70.0", "@typescript-eslint/parser": "^8.70.0", "eslint": "^10.0.0", "eslint-plugin-import": "^2.31.0", "husky": "^9.1.7", "prettier": "^3.6.2", "prettier-plugin-java": "^2.7.7", "prettier-pretty-check": "^0.2.0", "rimraf": "^6.1.0", "rollup": "^4.53.2", "swiftlint": "^2.0.0", "typescript": "^6.0.3" }, "peerDependencies": { "@capacitor/core": ">=8.0.0" } }],
-
-    "@capgo/capacitor-updater": ["@capgo/capacitor-updater@8.53.0", "", { "peerDependencies": { "@capacitor/core": "^8.0.0" } }, "sha512-fJfHi/h6AwZLvLrRlztxFUhKt+CDCHiMsRLzuOT0wFUvqP2qIK/B39nMr8xNXuRLzQoQWBkriQJO1ZWzhq3Afg=="],
+    "@capgo/capacitor-app-intents": ["@capgo/capacitor-app-intents@file:..", { "devDependencies": { "@capacitor/android": "^8.0.0", "@capacitor/cli": "^8.0.0", "@capacitor/core": "^8.0.0", "@capacitor/docgen": "^0.3.1", "@capacitor/ios": "^8.0.0", "@ionic/eslint-config": "^0.5.0", "@ionic/prettier-config": "^4.0.0", "@ionic/swiftlint-config": "^2.0.0", "@types/node": "^26.0.0", "@typescript-eslint/eslint-plugin": "^8.70.0", "@typescript-eslint/parser": "^8.70.0", "eslint": "^10.0.0", "eslint-plugin-import": "^2.31.0", "husky": "^9.1.7", "prettier": "^3.6.2", "prettier-plugin-java": "^2.7.7", "prettier-pretty-check": "^0.2.0", "rimraf": "^6.1.0", "rollup": "^4.53.2", "swiftlint": "^2.0.0", "typescript": "^6.0.3" }, "peerDependencies": { "@capacitor/core": ">=8.0.0" } }],
 
     "@emnapi/core": ["@emnapi/core@1.10.0", "", { "dependencies": { "@emnapi/wasi-threads": "1.2.1", "tslib": "^2.4.0" } }, "sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw=="],
 

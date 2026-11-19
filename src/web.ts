@@ -21,6 +21,22 @@ export class CapgoAppIntentsWeb extends WebPlugin implements CapgoAppIntentsPlug
     return this.reject();
   }
 
+  async completeInvocation(): Promise<void> {
+    return this.reject();
+  }
+
+  async failInvocation(): Promise<void> {
+    return this.reject();
+  }
+
+  async setOnscreenEntityContext(): Promise<void> {
+    return this.reject();
+  }
+
+  async clearOnscreenEntityContext(): Promise<void> {
+    return this.reject();
+  }
+
   async setEntityCatalog(): Promise<void> {
     return this.reject();
   }

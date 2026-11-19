@@ -61,6 +61,86 @@ public struct CapgoCatalogEntityQuery: EntityQuery {
     }
 
     public func suggestedEntities() async throws -> [CapgoCatalogEntity] {
+        CapgoAppIntentsBootstrap.ensureConfigured()
+        let onscreen = CapgoOnscreenEntityContextStore.shared.entities()
+        var prioritized: [CapgoCatalogEntity] = []
+        var seenPrioritized = Set<String>()
+        for reference in onscreen {
+            if let entry = CapgoEntityCatalogStore.shared.entry(
+                catalogType: reference.catalogType,
+                entityId: reference.entityId
+            ) {
+                let entity = CapgoCatalogEntity(
+                    catalogType: reference.catalogType,
+                    entityId: entry.id,
+                    title: entry.title,
+                    subtitle: entry.subtitle,
+                    metadata: entry.metadata
+                )
+                if seenPrioritized.insert(entity.id).inserted {
+                    prioritized.append(entity)
+                }
+            }
+        }
+        let all = try await allCatalogEntities()
+        guard !prioritized.isEmpty else {
+            return all
+        }
+        let prioritizedIds = Set(prioritized.map(\.id))
+        let remainder = all.filter { !prioritizedIds.contains($0.id) }
+        return prioritized + remainder
+    }
+
+    public func entities(matching string: String) async throws -> [CapgoCatalogEntity] {
+        let needle = string.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !needle.isEmpty else {
+            return []
+        }
+        return try await allCatalogEntities().filter { entity in
+            entity.title.lowercased().contains(needle)
+                || (entity.subtitle?.lowercased().contains(needle) ?? false)
+                || metadataMatches(entity: entity, needle: needle)
+        }
+    }
+
+    public func entities(forProperty property: String, equalTo value: String) async throws -> [CapgoCatalogEntity] {
+        let propertyKey = property.trimmingCharacters(in: .whitespacesAndNewlines)
+        let expected = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !propertyKey.isEmpty, !expected.isEmpty else {
+            return []
+        }
+        return try await allCatalogEntities().filter { entity in
+            guard let metadata = entity.metadata,
+                  let entry = metadata[propertyKey] else {
+                return false
+            }
+            switch entry {
+            case .string(let stringValue):
+                return stringValue == expected
+            case .number(let numberValue):
+                if let parsed = Double(expected) {
+                    return numberValue == parsed
+                }
+                return String(numberValue) == expected
+            case .bool(let boolValue):
+                return String(boolValue) == expected.lowercased()
+            default:
+                return false
+            }
+        }
+    }
+
+    @available(iOS 17.0, *)
+    public func displayRepresentations(matching string: String) async throws -> [CapgoCatalogEntity.ID: DisplayRepresentation] {
+        let matches = try await entities(matching: string)
+        var map: [CapgoCatalogEntity.ID: DisplayRepresentation] = [:]
+        for entity in matches {
+            map[entity.id] = entity.displayRepresentation
+        }
+        return map
+    }
+
+    private func allCatalogEntities() async throws -> [CapgoCatalogEntity] {
         let catalogs = CapgoEntityCatalogStore.shared
         var all: [CapgoCatalogEntity] = []
         for type in catalogs.catalogTypes() {
@@ -78,5 +158,18 @@ public struct CapgoCatalogEntityQuery: EntityQuery {
         }
         return all
     }
+
+    private func metadataMatches(entity: CapgoCatalogEntity, needle: String) -> Bool {
+        guard let metadata = entity.metadata else { return false }
+        for (_, value) in metadata {
+            if let text = value.toAny() as? String, text.lowercased().contains(needle) {
+                return true
+            }
+        }
+        return false
+    }
 }
+
+@available(iOS 17.0, *)
+extension CapgoCatalogEntityQuery: EntityStringQuery {}
 #endif

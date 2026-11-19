@@ -17,14 +17,36 @@ public struct CapgoDispatchAppIntent: AppIntent {
     @Parameter(title: "Catalog item")
     public var catalogItem: CapgoCatalogEntity?
 
+    @Parameter(title: "Await JavaScript result", default: false)
+    public var awaitsJavaScriptResult: Bool
+
+    @Parameter(title: "Foreground only", default: true)
+    public var foregroundOnly: Bool
+
+    @Parameter(title: "Timeout seconds", default: 30)
+    public var timeoutSeconds: Int
+
     public init() {
         self.actionName = ""
+        self.awaitsJavaScriptResult = false
+        self.foregroundOnly = true
+        self.timeoutSeconds = 30
     }
 
-    public init(actionName: String, parametersJSON: String? = nil, catalogItem: CapgoCatalogEntity? = nil) {
+    public init(
+        actionName: String,
+        parametersJSON: String? = nil,
+        catalogItem: CapgoCatalogEntity? = nil,
+        awaitsJavaScriptResult: Bool = false,
+        foregroundOnly: Bool = true,
+        timeoutSeconds: Int = 30
+    ) {
         self.actionName = actionName
         self.parametersJSON = parametersJSON
         self.catalogItem = catalogItem
+        self.awaitsJavaScriptResult = awaitsJavaScriptResult
+        self.foregroundOnly = foregroundOnly
+        self.timeoutSeconds = timeoutSeconds
     }
 
     @MainActor
@@ -45,8 +67,15 @@ public struct CapgoDispatchAppIntent: AppIntent {
             }
         }
 
-        _ = CapgoAppIntentsBridge.shared.enqueue(name: actionName, params: params, source: .appIntent)
-        return .result()
+        let options = CapgoIntentPerformOptions(
+            actionName: actionName,
+            params: params,
+            awaitsJavaScriptResult: awaitsJavaScriptResult,
+            foregroundOnly: foregroundOnly,
+            timeoutSeconds: TimeInterval(max(1, timeoutSeconds))
+        )
+
+        return try await CapgoIntentResultSupport.perform(options: options)
     }
 }
 #endif
