@@ -22,7 +22,7 @@ test('generate-typed-intents writes tool intent and shortcuts provider', () => {
     assert.match(intentSwift, /struct OrderDishToolIntent: AppIntent/);
     assert.match(intentSwift, /@available\(iOS 17\.0, \*\)/);
     assert.match(intentSwift, /ReturnsValue<String>/);
-    assert.ok(intentSwift.includes('\\(.$dish)'));
+    assert.match(intentSwift, /Summary \{\s*\\\.\$dish/s);
     assert.match(shortcutsSwift, /@AppShortcutsBuilder/);
     assert.match(shortcutsSwift, /intent: OrderDishToolIntent\(\)/);
   } finally {

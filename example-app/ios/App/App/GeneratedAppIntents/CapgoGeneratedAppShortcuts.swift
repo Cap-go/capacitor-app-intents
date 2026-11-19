@@ -3,11 +3,10 @@
 import AppIntents
 import CapgoCapacitorAppIntents
 
-@available(iOS 16.0, *)
+@available(iOS 17.0, *)
 struct CapgoGeneratedAppShortcuts: AppShortcutsProvider {
   @AppShortcutsBuilder
   static var appShortcuts: [AppShortcut] {
-    if #available(iOS 17.0, *) {
     AppShortcut(
       intent: OrderDishToolIntent(),
       phrases: [
@@ -16,7 +15,6 @@ struct CapgoGeneratedAppShortcuts: AppShortcutsProvider {
       shortTitle: "Order dish",
       systemImageName: "fork.knife"
     )
-    }
     AppShortcut(
       intent: CapgoDispatchAppIntent(actionName: "openMenu"),
       phrases: [
