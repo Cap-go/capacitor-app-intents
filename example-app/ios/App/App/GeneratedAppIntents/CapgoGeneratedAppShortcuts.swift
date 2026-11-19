@@ -7,6 +7,11 @@ import CapgoCapacitorAppIntents
 struct CapgoGeneratedAppShortcuts: AppShortcutsProvider {
   @AppShortcutsBuilder
   static var appShortcuts: [AppShortcut] {
+    capgoShortcutsForCurrentOS()
+  }
+
+  @AppShortcutsBuilder
+  private static func capgoShortcutsForCurrentOS() -> [AppShortcut] {
     AppShortcut(
       intent: CapgoDispatchAppIntent(actionName: "openMenu"),
       phrases: [
@@ -15,30 +20,16 @@ struct CapgoGeneratedAppShortcuts: AppShortcutsProvider {
       shortTitle: "Open menu",
       systemImageName: "list.bullet"
     )
-  }
-}
-
-@available(iOS 17.0, *)
-extension CapgoGeneratedAppShortcuts {
-  @AppShortcutsBuilder
-  static var appShortcuts: [AppShortcut] {
-    AppShortcut(
+    if #available(iOS 17.0, *) {
+      AppShortcut(
       intent: OrderDishToolIntent(),
       phrases: [
-        "Order a dish in \(.applicationName)",
+      "Order a dish in \(.applicationName)",
       ],
       shortTitle: "Order dish",
       systemImageName: "fork.knife"
-    )
-    AppShortcut(
-      intent: CapgoDispatchAppIntent(actionName: "openMenu"),
-      phrases: [
-        "Open the menu in \(.applicationName)",
-      ],
-      shortTitle: "Open menu",
-      systemImageName: "list.bullet"
-    )
+      )
+    }
   }
 }
-
 #endif

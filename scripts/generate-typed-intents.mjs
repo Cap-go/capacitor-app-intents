@@ -163,27 +163,30 @@ function generateShortcutsProvider(config) {
   const ios17Blocks = ios17Shortcuts.map(appShortcutBlock).join('\n');
   const allBlocks = shortcuts.map(appShortcutBlock).join('\n');
 
-  const ios17Extension =
-    ios16Shortcuts.length > 0 && ios17Shortcuts.length > 0
-      ? `
-@available(iOS 17.0, *)
-extension ${providerName} {
+  const hasMixedAvailability = ios16Shortcuts.length > 0 && ios17Shortcuts.length > 0;
+
+  const builderBody = hasMixedAvailability
+    ? `    capgoShortcutsForCurrentOS()`
+    : allBlocks || '    // no shortcuts';
+
+  const ios17BlocksInAvailability = ios17Blocks
+    .split('\n')
+    .map((line) => (line.length ? `      ${line.trimStart()}` : line))
+    .join('\n');
+
+  const mixedHelper = hasMixedAvailability
+    ? `
   @AppShortcutsBuilder
-  static var appShortcuts: [AppShortcut] {
-${allBlocks}
+  private static func capgoShortcutsForCurrentOS() -> [AppShortcut] {
+${ios16Blocks}
+    if #available(iOS 17.0, *) {
+${ios17BlocksInAvailability}
+    }
   }
-}
 `
-      : '';
+    : '';
 
-  const baseBlocks =
-    ios16Shortcuts.length > 0
-      ? ios16Blocks
-      : ios17Shortcuts.length > 0
-        ? ios17Blocks
-        : '    // no shortcuts';
-
-  const baseAvailability =
+  const providerAvailability =
     ios16Shortcuts.length > 0
       ? '@available(iOS 16.0, *)'
       : ios17Shortcuts.length > 0
@@ -195,14 +198,13 @@ ${allBlocks}
 import AppIntents
 import ${pluginModule}
 
-${baseAvailability}
+${providerAvailability}
 struct ${providerName}: AppShortcutsProvider {
   @AppShortcutsBuilder
   static var appShortcuts: [AppShortcut] {
-${baseBlocks}
+${builderBody}
   }
-}
-${ios17Extension}
+${hasMixedAvailability ? mixedHelper : ''}}
 #endif
 `;
 }
