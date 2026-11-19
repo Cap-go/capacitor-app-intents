@@ -15,14 +15,13 @@ struct CapgoGeneratedAppShortcuts: AppShortcutsProvider {
       shortTitle: "Open menu",
       systemImageName: "list.bullet"
     )
-    if #available(iOS 17.0, *) {
-      capgoShortcutsRequiringIOS17
-    }
   }
+}
 
-  @available(iOS 17.0, *)
+@available(iOS 17.0, *)
+struct CapgoGeneratedAppShortcutsToolShortcuts: AppShortcutsProvider {
   @AppShortcutsBuilder
-  private static var capgoShortcutsRequiringIOS17: [AppShortcut] {
+  static var appShortcuts: [AppShortcut] {
     AppShortcut(
       intent: OrderDishToolIntent(),
       phrases: [
