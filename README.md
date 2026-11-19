@@ -258,7 +258,7 @@ cd example-app
 bunx cap sync ios
 ```
 
-Copy `example-app/ios-shortcuts/CapgoGeneratedAppShortcuts.swift` into the Xcode app target after `cap add ios`.
+See `example-app/README.md` for a committed iOS project with generated shortcuts, typed intents, and `Skills.skillsbundle` already in the App target.
 
 ## Docs
 

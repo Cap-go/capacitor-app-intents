@@ -52,12 +52,12 @@ case "$platform" in
       bunx cap add ios
     fi
     bunx cap sync ios
-    if [ -f app-shortcuts.config.json ]; then
+    if [ -f app-intents.codegen.json ]; then
+      node "$repo_root/scripts/prepare-example-ios.mjs" .
+    elif [ -f app-shortcuts.config.json ]; then
       node "$repo_root/scripts/generate-app-shortcuts.mjs" \
         --config app-shortcuts.config.json \
         --output ios-shortcuts/CapgoGeneratedAppShortcuts.swift
-    fi
-    if [ -f app-shortcuts.config.json ]; then
       template_pbx="$tmp_root/cap-spm-template.pbxproj"
       curl -fsSL \
         "https://raw.githubusercontent.com/ionic-team/capacitor/main/ios-spm-template/App/App.xcodeproj/project.pbxproj" \
@@ -66,9 +66,12 @@ case "$platform" in
         "$template_pbx" \
         CapgoGeneratedAppShortcuts.swift
     fi
-    if [ -f ios/App/CapApp-SPM/Package.swift ]; then
+    if [ -f ios/App/CapApp-SPM/Package.swift ] && [ ! -f app-intents.codegen.json ]; then
       sed -i.bak 's/.iOS(.v15)/.iOS(.v16)/g' ios/App/CapApp-SPM/Package.swift
       rm -f ios/App/CapApp-SPM/Package.swift.bak
+    fi
+    if [ -f app-intents.codegen.json ]; then
+      node "$repo_root/scripts/patch-ios-example-app-intents.mjs" .
     fi
     rm -rf "$HOME/Library/Caches/org.swift.swiftpm/artifacts"/https___github_com_ionic_team_capacitor_swift_pm_releases_download_*
     xcodebuild \
