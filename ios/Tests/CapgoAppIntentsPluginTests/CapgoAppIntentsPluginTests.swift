@@ -1,5 +1,5 @@
 import XCTest
-@testable import CapgoAppIntentsPlugin
+@testable import CapgoCapacitorAppIntents
 
 final class CapgoAppIntentsPluginTests: XCTestCase {
     private func isolatedSuite() -> String {
