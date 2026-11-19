@@ -19,7 +19,7 @@ struct CapgoGeneratedAppShortcuts: AppShortcutsProvider {
 }
 
 @available(iOS 17.0, *)
-struct CapgoGeneratedAppShortcutsToolShortcuts: AppShortcutsProvider {
+extension CapgoGeneratedAppShortcuts {
   @AppShortcutsBuilder
   static var appShortcuts: [AppShortcut] {
     AppShortcut(
@@ -30,6 +30,15 @@ struct CapgoGeneratedAppShortcutsToolShortcuts: AppShortcutsProvider {
       shortTitle: "Order dish",
       systemImageName: "fork.knife"
     )
+    AppShortcut(
+      intent: CapgoDispatchAppIntent(actionName: "openMenu"),
+      phrases: [
+        "Open the menu in \(.applicationName)",
+      ],
+      shortTitle: "Open menu",
+      systemImageName: "list.bullet"
+    )
   }
 }
+
 #endif
