@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "start": "vite",
-    "prebuild": "cd .. && bun run build",
+    "prebuild": "node scripts/example-prebuild.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "generate:ios-app-intents": "node ../scripts/prepare-example-ios.mjs .",
