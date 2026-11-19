@@ -14,11 +14,15 @@ public struct OrderDishToolIntent: AppIntent {
     @Parameter(title: "Dish")
     public var dish: CapgoCatalogEntity
 
+    @Parameter(title: "Quantity", default: 1)
+    public var quantity: Int
+
     public init() {}
 
     public static var parameterSummary: some ParameterSummary {
         Summary {
             \.$dish
+            \.$quantity
         }
     }
 
@@ -28,6 +32,7 @@ public struct OrderDishToolIntent: AppIntent {
             params["dishCatalogType"] = dish.catalogType
             params["dishEntityId"] = dish.entityId
             params["dishTitle"] = dish.title
+        params["quantity"] = quantity
 
         let options = CapgoIntentPerformOptions(
             actionName: "orderDish",

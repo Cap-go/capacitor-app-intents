@@ -7,6 +7,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {
   collectParamsFromParameters,
   escapeSwiftString,
@@ -169,10 +170,13 @@ function generateShortcutsProvider(config) {
     ? ios16Blocks
     : allBlocks || '    // no shortcuts';
 
+  const omittedTitles = ios17Shortcuts.map((s) => s.shortTitle);
   const mixedNote = hasMixedAvailability
-    ? `// Tool Siri phrases for ${ios17Shortcuts.map((s) => s.shortTitle).join(', ')} require iOS 17+.
+    ? `// Tool Siri phrases for ${omittedTitles.join(', ')} are omitted from this AppShortcutsProvider (iOS 17+ typed shortcuts in a mixed config).
 // Apple allows one AppShortcutsProvider per app, and Xcode 26 rejects if #available inside @AppShortcutsBuilder.
 // Typed tool intents are still generated as AppIntent types for iOS 17 Shortcuts/Siri discovery.
+// Raise deployment target to iOS 17.0 to emit all shortcuts, or use a CapgoDispatchAppIntent shortcut for the phrase.
+#warning("Capgo codegen omitted App Shortcut Siri phrases for: ${omittedTitles.join(', ')}. See @capgo/capacitor-app-intents README (mixed iOS 16/17 codegen).")
 `
     : '';
 
@@ -199,6 +203,32 @@ ${builderBody}
 `;
 }
 
+export function describeMixedShortcutOmissions(config) {
+  const shortcuts = config.shortcuts ?? [];
+  const ios17Shortcuts = shortcuts.filter((shortcut) => shortcutRequiresIOS17(shortcut, config));
+  const ios16Shortcuts = shortcuts.filter((shortcut) => !shortcutRequiresIOS17(shortcut, config));
+  if (ios16Shortcuts.length === 0 || ios17Shortcuts.length === 0) {
+    return null;
+  }
+  const titles = ios17Shortcuts.map((s) => s.shortTitle).join(', ');
+  return {
+    omittedShortTitles: ios17Shortcuts.map((s) => s.shortTitle),
+    cliMessage:
+      `Capgo codegen: omitting App Shortcut Siri phrases for [${titles}] ` +
+      '(iOS 17 typed intents in a mixed config with iOS 16 dispatch shortcuts). ' +
+      'Apple allows one AppShortcutsProvider; Xcode 26 rejects #available inside @AppShortcutsBuilder. ' +
+      'Raise iOS deployment target to 17.0 to register all phrases, or use a CapgoDispatchAppIntent shortcut for the phrase. ' +
+      'See @capgo/capacitor-app-intents README.',
+  };
+}
+
+export function generateShortcutsProviderSwift(config) {
+  return generateShortcutsProvider(config);
+}
+
+const isMain = import.meta.url === pathToFileURL(process.argv[1] ?? '').href;
+
+if (isMain) {
 const args = parseArgs(process.argv);
 if (args.help) {
   console.log(
@@ -226,6 +256,10 @@ for (const intent of config.intents ?? []) {
 }
 
 if (Array.isArray(config.shortcuts) && config.shortcuts.length > 0) {
+  const mixedOmission = describeMixedShortcutOmissions(config);
+  if (mixedOmission) {
+    console.warn(`warning: ${mixedOmission.cliMessage}`);
+  }
   const providerFile = `${config.providerName ?? 'CapgoGeneratedAppShortcuts'}.swift`;
   expectedFiles.add(providerFile);
   const shortcutsFile = path.join(outputDir, providerFile);
@@ -240,4 +274,5 @@ if (fs.existsSync(outputDir)) {
       console.log(`Removed obsolete ${entry}`);
     }
   }
+}
 }

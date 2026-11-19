@@ -182,15 +182,6 @@ export function parameterPropertyBlock(parameters) {
     .join('\n\n');
 }
 
-export function parameterSummaryArgs(parameters) {
-  if (!parameters.length) {
-    return '';
-  }
-  return parameters
-    .map((parameter) => '\\(.' + '$' + parameter.name + ')')
-    .join(', ');
-}
-
 function catalogEntityParamLines(parameter) {
   const inner = [
     `            params["${parameter.name}CatalogType"] = ${parameter.name}.catalogType`,
