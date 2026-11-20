@@ -201,6 +201,8 @@ node node_modules/@capgo/capacitor-app-intents/scripts/generate-skills-bundle.mj
 
 The generic `CapgoDispatchAppIntent(actionName:)` shortcut path remains available. Typed intents call `CapgoIntentPerformExecutor` and can await JavaScript.
 
+**iOS 16 vs iOS 17 shortcuts (mixed config):** Dispatch shortcuts (`CapgoDispatchAppIntent`) work on iOS 16+. Shortcuts that target typed intents with `awaitJavaScriptResult: true` need iOS 17+ at runtime. Apple allows only one `AppShortcutsProvider` per app, and Xcode 26 rejects `if #available` inside `@AppShortcutsBuilder`. By default (`minimumIOSVersion` omitted or `16`), a mixed codegen JSON gets a single `@available(iOS 16.0, *)` provider with **only** dispatch shortcuts. Tool shortcut Siri phrases are omitted (CLI warning plus `#warning` in generated Swift). Typed `AppIntent` types are still generated for the Shortcuts app. To emit **all** shortcuts on one `@available(iOS 17.0, *)` provider, set `"minimumIOSVersion": 17` in `app-intents.codegen.json` (the generator does not read the Xcode deployment target). Your app must still target iOS 17+ at build time for that layout. Or keep the default and add a `CapgoDispatchAppIntent` shortcut entry for the Siri phrase you need on iOS 16+.
+
 Custom intents can still call `CapgoAppIntentsBridge.shared.enqueue(...)` from Swift. See `docs/ExampleCustomIntent.swift`. See `docs/app-skills.md` for Siri AI preview evaluation on a real device.
 
 ## Entity catalog

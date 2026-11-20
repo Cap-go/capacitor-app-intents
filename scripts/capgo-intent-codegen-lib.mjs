@@ -97,6 +97,10 @@ export function validateCodegenConfig(config) {
     }
   }
 
+  if (config.minimumIOSVersion !== undefined) {
+    codegenMinimumIOSVersion(config);
+  }
+
   if (config.skills !== undefined && !Array.isArray(config.skills)) {
     throw new Error('config.skills must be an array when present');
   }
@@ -182,15 +186,6 @@ export function parameterPropertyBlock(parameters) {
     .join('\n\n');
 }
 
-export function parameterSummaryArgs(parameters) {
-  if (!parameters.length) {
-    return '';
-  }
-  return parameters
-    .map((parameter) => '\\(.' + '$' + parameter.name + ')')
-    .join(', ');
-}
-
 function catalogEntityParamLines(parameter) {
   const inner = [
     `            params["${parameter.name}CatalogType"] = ${parameter.name}.catalogType`,
@@ -233,6 +228,21 @@ export function collectParamsFromParameters(parameters) {
     lines.push(`        params["${parameter.name}"] = ${parameter.name}`);
   }
   return lines.join('\n');
+}
+
+export function codegenMinimumIOSVersion(config) {
+  const raw = config.minimumIOSVersion;
+  if (raw === undefined || raw === null) {
+    return 16;
+  }
+  const major =
+    typeof raw === 'string'
+      ? Number.parseInt(raw.replace(/^(\d+).*$/, '$1'), 10)
+      : Math.trunc(Number(raw));
+  if (major !== 16 && major !== 17) {
+    throw new Error('minimumIOSVersion must be 16 or 17 when present');
+  }
+  return major;
 }
 
 export function loadCodegenConfig(configPath) {
