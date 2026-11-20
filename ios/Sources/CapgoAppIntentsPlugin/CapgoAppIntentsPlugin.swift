@@ -8,7 +8,7 @@ import AppIntents
 
 @objc(CapgoAppIntentsPlugin)
 public class CapgoAppIntentsPlugin: CAPPlugin, CAPBridgedPlugin {
-    private let pluginVersion: String = "8.2.0"
+    private let pluginVersion: String = "8.3.0"
     public let identifier = "CapgoAppIntentsPlugin"
     public let jsName = "CapgoAppIntents"
     public let pluginMethods: [CAPPluginMethod] = [
